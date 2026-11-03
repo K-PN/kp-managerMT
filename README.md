@@ -4,6 +4,8 @@
 
 **Trạng thái:** đã tạo mã nguồn, cấu hình XcodeGen và bộ XCTest. Máy phát triển hiện tại là Windows, không có Swift, Xcode hoặc iOS SDK. **Chưa biên dịch Swift, chưa chạy XCTest, chưa chạy Simulator/iPhone; chưa đủ căn cứ để coi là bản phát hành dùng cho dữ liệu thật.** Xem [PROJECT_PLAN.md](PROJECT_PLAN.md) và [báo cáo kiểm tra](docs/VERIFICATION.md).
 
+Source đã push lên GitHub và build Codemagic đầu tiên đã được khởi chạy. [Mở build và kịch bản test](docs/QUICK_TEST.md). Trạng thái build cuối được hiển thị trên Codemagic; đoạn trạng thái phía trên mô tả checkpoint trước khi có kết quả cloud.
+
 ## Build và cài qua TestFlight khi không có Mac
 
 Phương án chính đã chọn là **Codemagic**. [Hướng dẫn đầy đủ từ Windows](docs/CODEMAGIC.md) giải thích cách tạo Bundle ID/app mới trong tài khoản Apple Developer hiện tại, nối GitHub `K-PN/kp-managerMT`, chạy kiểm tra, cấu hình signing và upload TestFlight.

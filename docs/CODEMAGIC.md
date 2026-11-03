@@ -1,6 +1,6 @@
 # Build IPA và dùng TestFlight từ Windows
 
-Repository: [K-PN/kp-managerMT](https://github.com/K-PN/kp-managerMT). `origin` local đã trỏ tới repository này; chưa push mã nguồn và chưa chạy build Codemagic trong phiên triển khai.
+Repository: [K-PN/kp-managerMT](https://github.com/K-PN/kp-managerMT). Source đã được push lên branch `main`. Codemagic đã kết nối ứng dụng [kp-managerMT](https://codemagic.io/app/6aea10057cef5b806068b14c/settings); build kiểm tra đầu được khởi chạy. Xem [QUICK_TEST.md](QUICK_TEST.md) để mở build và thực hiện kịch bản thử.
 
 Có hai workflow trong [codemagic.yaml](../codemagic.yaml):
 

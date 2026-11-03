@@ -5,7 +5,7 @@ Cập nhật: 03/11/2026, Asia/Bangkok. Nhãn **đã viết mã** không có ngh
 ## Phase 1 — Nền tảng: đã viết mã, chờ build Mac
 
 - [x] Kiểm tra workspace: trống; Windows PowerShell 5.1, Git/Python/Node có sẵn; không có Swift/Xcode/iOS SDK, WSL chưa dùng được.
-- [x] Khởi tạo Git local; chưa commit/push.
+- [x] Khởi tạo Git, commit và push source lên branch main của K-PN/kp-managerMT.
 - [x] Swift package độc lập, SwiftUI app iOS 17+, XcodeGen/scheme, CI Mac.
 - [x] Phân lớp, protocols, SQLite schema v1 và migration theo transaction.
 - [x] Navigation native, tiếng Việt, theme hệ thống/sáng/tối, Dynamic Type và nhãn accessibility.
@@ -53,7 +53,9 @@ Cập nhật: 03/11/2026, Asia/Bangkok. Nhãn **đã viết mã** không có ngh
 
 - [x] Hướng dẫn build, ký mã/cài iPhone, backup và hợp đồng proxy.
 - [x] Chốt Codemagic; thêm hai workflow verify/TestFlight, automatic signing bằng CLI, versioning và artifact checks.
-- [x] Nối origin tới `https://github.com/K-PN/kp-managerMT.git`; chưa commit/push.
+- [x] Nối origin, push source và thêm ứng dụng Codemagic kp-managerMT.
+- [x] Thêm 2 UI tests với database Debug Simulator riêng, gói Simulator và ảnh chụp UI thật.
+- [x] Khởi chạy build ios-verify đầu tiên trên Codemagic; kết quả cuối chưa ghi nhận ở checkpoint này.
 - [x] App icon iPhone và 1024px RGB, script tái tạo icon.
 - [x] 17 kiểm thử pipeline trên Windows, gồm lỗi Swift giả lập qua Bash và chặn nhầm Apple ID sang app cũ; không gọi Apple.
 - [ ] Compile/build/test bằng Xcode và xử lý lỗi SDK/type checking nếu có.
