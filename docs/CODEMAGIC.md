@@ -1,6 +1,6 @@
 # Build IPA và dùng TestFlight từ Windows
 
-Repository: [K-PN/kp-managerMT](https://github.com/K-PN/kp-managerMT), branch `main`. Codemagic [build #6](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea18dba87b4d255fde356e) đã đạt 36/36 XCTest và xuất gói Simulator, ảnh giao diện thật. Bản ký IPA đang được cấu hình; chỉ xác nhận upload khi có kết quả từ Apple.
+Repository: [K-PN/kp-managerMT](https://github.com/K-PN/kp-managerMT), branch `main`. Codemagic [ios-testflight #4](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea267da87b4d255fde3a68), source `f342836`, đã đạt 36/36 XCTest, ký IPA **1.0.0 (10)** và được Apple xác nhận **UPLOAD SUCCEEDED with no errors**. App record Sổ Nợ AI có Apple ID **6830292186**. Xem VERIFICATION.md để phân biệt upload với trạng thái sẵn sàng cài TestFlight.
 
 ## Cấu hình Apple đã chọn
 
@@ -19,7 +19,7 @@ Trong app Codemagic → Environment variables, group **`sono_app_store`** chứa
 
 `BUNDLE_ID=vn.kpn.sonoai` và `MARKETING_VERSION=1.0.0` được đặt trong YAML. Bundle ID trong `ios_signing` phải trùng `BUNDLE_ID`.
 
-Integration `qhs_apple` cung cấp `APP_STORE_CONNECT_PRIVATE_KEY`, `APP_STORE_CONNECT_KEY_IDENTIFIER`, `APP_STORE_CONNECT_ISSUER_ID` cho CLI và publishing. Không khai báo trùng các biến này trong group, không đưa private key vào repository, log hoặc chat. Managed signing nhập certificate/profile vào runner; không dùng `CERTIFICATE_PRIVATE_KEY`, không gọi `fetch-signing-files --create`.
+Integration `qhs_apple` cung cấp `APP_STORE_CONNECT_PRIVATE_KEY`, `APP_STORE_CONNECT_KEY_IDENTIFIER`, `APP_STORE_CONNECT_ISSUER_ID` cho CLI và publishing. Preflight hỗ trợ PEM trực tiếp hoặc secret reference `@file:`/`@env:` của CLI mà không in nội dung/đường dẫn khóa. Không khai báo trùng các biến này trong group, không đưa private key vào repository, log hoặc chat. Managed signing nhập certificate/profile vào runner; không dùng `CERTIFICATE_PRIVATE_KEY`, không gọi `fetch-signing-files --create`.
 
 Tham khảo [Codemagic managed signing](https://docs.codemagic.io/yaml-code-signing/signing-ios/) và [publishing qua integration](https://docs.codemagic.io/partials/yaml-publishing-app-store-connect-team-integration/).
 
@@ -48,7 +48,9 @@ Sau khi Codemagic upload thành công, đợi Apple xử lý build trong App Sto
 
 YAML đặt `submit_to_testflight: false`: cờ này điều khiển gửi beta review, còn upload IPA vẫn hoạt động. Chưa tự gửi external beta review hoặc App Store review. [Codemagic publishing](https://docs.codemagic.io/yaml-publishing/app-store-connect/).
 
-App mã hóa backup bằng CryptoKit. Chưa tự đặt `ITSAppUsesNonExemptEncryption`; khai báo export compliance phải dựa trên chức năng mã hóa thực tế và yêu cầu Apple. Các chức năng camera/micro, Face ID, Keychain, offline và backup cần kiểm tra thêm trên iPhone theo VERIFICATION.md.
+Build **1.0.0 (10)** đã xử lý xong, gán vào **SoNo AI Internal** và có trạng thái **Testing**; tài khoản chủ sở hữu có trạng thái **Invited**.
+
+App mã hóa backup bằng CryptoKit và dẫn xuất khóa bằng CommonCrypto của hệ điều hành Apple, không nhúng thư viện cipher bên ngoài. Trong câu hỏi App Encryption Documentation đã chọn **None of the algorithms mentioned above** (không dùng thuật toán riêng hoặc thuật toán chuẩn ngoài phần mã hóa Apple cung cấp), lưu thành công và hết Missing Compliance. Đối chiếu [tài liệu Apple về mã hóa trong hệ điều hành](https://developer.apple.com/help/app-store-connect/reference/app-information/export-compliance-documentation-for-encryption). Chưa tự đặt `ITSAppUsesNonExemptEncryption`; các build sau vẫn có thể cần trả lời lại, và cần xem lại khai báo nếu chức năng mã hóa thay đổi. Camera/micro, Face ID, Keychain, offline và backup cần kiểm tra thêm trên iPhone theo VERIFICATION.md.
 
 ## Kiểm tra trên Windows
 

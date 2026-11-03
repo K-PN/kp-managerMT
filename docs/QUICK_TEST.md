@@ -22,7 +22,15 @@ Các ảnh từ build #6: [Tổng quan](screenshots/01-dashboard.png), [Khách h
 
 ## Test trên iPhone qua TestFlight
 
-Đã tạo app record **Sổ Nợ AI**, Apple ID **6830292186**, Bundle ID **vn.kpn.sonoai** và nhóm **SoNo AI Internal** với tài khoản chủ sở hữu. Chủ tài khoản đã chấp nhận thỏa thuận Developer cập nhật. Codemagic đã có group `sono_app_store`, integration và provisioning profile; release workflow đang được kiểm chứng. Sau upload và Apple processing, thêm build vào nhóm này. Xem [CODEMAGIC.md](CODEMAGIC.md).
+**Đã sẵn sàng:** build **1.0.0 (10)** đang **Testing** trong **SoNo AI Internal**; tài khoản chủ sở hữu đã có trạng thái **Invited**. [Release #4](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea267da87b4d255fde3a68), source `f342836`, đã đạt 36/36 XCTest, ký IPA và upload Apple thành công. Apple processing và khai báo mã hóa đã hoàn tất. App Store Apple ID **6830292186**, Bundle ID **vn.kpn.sonoai**.
+
+Trên iPhone iOS 17 trở lên:
+
+1. Cài **TestFlight** từ App Store.
+2. Mở email mời của Apple tại địa chỉ tài khoản chủ sở hữu đã được thêm vào nhóm.
+3. Bấm **View in TestFlight → Accept → Install** cho **Sổ Nợ AI 1.0.0 (10)**. Nếu đã nhận lời mời, mở TestFlight để tìm ứng dụng.
+
+[Mở nhóm kiểm thử trong App Store Connect](https://appstoreconnect.apple.com/teams/089cecc4-21e3-4285-bd8a-d5707654ad78/apps/6830292186/testflight/groups/06051f02-259a-4305-ac14-c0bbdc1b22f6/builds). Đây là trang quản lý yêu cầu đăng nhập, không phải link beta công khai. Xem [CODEMAGIC.md](CODEMAGIC.md) để build lại từ Windows.
 
 Khi cài được bản TestFlight, dùng dữ liệu thử riêng:
 

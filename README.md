@@ -2,7 +2,7 @@
 
 Ứng dụng iPhone cá nhân bằng **Swift + SwiftUI**, iOS 17 trở lên. Sổ khách hàng, giao dịch, ảnh và nhật ký nằm trong SQLite trên iPhone. Không có tài khoản ứng dụng, quảng cáo, Firebase hay Supabase. Tiền dùng `Int64` nguyên đồng; lịch và hiển thị dùng `Asia/Ho_Chi_Minh`.
 
-**Trạng thái:** đã có app native chạy trên iPhone Simulator và IPA ký Distribution. [Build ios-testflight #2](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea21bfa87b4d255fde38d1), source `31d4f42`, đạt **36/36 XCTest**: 31 core, 3 app smoke, 2 UI; archive/export IPA thành công. Apple từ chối upload vì cấu hình target mặc định có iPad; đã sửa target về iPhone và đang build lại. Luồng tạo khách → ghi nợ 500.000đ → thu 200.000đ → dư 300.000đ đã đạt. Có [ảnh chạy thật](docs/screenshots/README.md). **Chưa có bản cài TestFlight và chưa kiểm chứng trên iPhone thật.** Xem [báo cáo kiểm tra](docs/VERIFICATION.md).
+**Trạng thái:** [build ios-testflight #4](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea267da87b4d255fde3a68), source `f342836`, thành công sau 7m14s: **36/36 XCTest** (31 core, 3 app smoke, 2 UI), archive/export IPA ký Distribution và **Apple xác nhận upload thành công**. Phiên bản **1.0.0 (10)** đang **Testing** trong nhóm **SoNo AI Internal**, tài khoản chủ sở hữu đã được mời. Bundle ID `vn.kpn.sonoai`, iPhone iOS 17+. Luồng tạo khách → ghi nợ 500.000đ → thu 200.000đ → dư 300.000đ đã đạt. Có [ảnh chạy thật](docs/screenshots/README.md). Chưa kiểm chứng trên iPhone thật. Xem [cách cài và test](docs/QUICK_TEST.md), [báo cáo kiểm tra](docs/VERIFICATION.md).
 
 Source đã push lên GitHub. [Mở build và kịch bản test](docs/QUICK_TEST.md); kết quả cập nhật trên trang Codemagic.
 

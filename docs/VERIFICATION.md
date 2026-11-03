@@ -2,11 +2,17 @@
 
 ## Cập nhật build cloud
 
+**Release [ios-testflight #4](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea267da87b4d255fde3a68), `f342836`, thành công sau 7m14s.** 7 workspace checks + 18 CI tests, 31 core XCTest, 3 app smoke và 2 UI XCTest đạt. Test xác nhận đúng tên khách trước lưu; luồng ghi nợ 500.000đ → thu 200.000đ → dư 300.000đ đạt. Archive/export IPA **1.0.0 (10)** thành công; metadata, chữ ký/provisioning resources và `UIDeviceFamily == [1]` đạt. Apple trả **UPLOAD SUCCEEDED with no errors**, delivery UUID `46052f33-75b6-4a77-9b48-3a4e75f6b9b0`. Artifacts có IPA 1,13 MB, dSYM 2,13 MB, logs/xcresult 75,31 MB. Chưa đồng nhất upload thành công với Apple processing hoặc việc đã cài trên iPhone thật.
+
+**TestFlight đã sẵn sàng ngày 04/11/2026:** Apple processing hoàn tất, khai báo mã hóa chỉ dùng framework hệ điều hành đã lưu và hết Missing Compliance. Build **1.0.0 (10)** được gán vào nhóm **SoNo AI Internal**; trang nhóm hiển thị **1 Tester ∙ 1 Build**, build **Testing**, tài khoản chủ sở hữu **Invited**. Chưa cài hoặc kiểm chứng trên iPhone thật thay người dùng. Bằng chứng chụp trang lưu trong `build/evidence/` (ignored); kịch bản test thiết bị ở QUICK_TEST.md.
+
 Ngày 04/11/2026: đã tạo Bundle ID `vn.kpn.sonoai`, hồ sơ Sổ Nợ AI (Apple ID 6830292186), provisioning App Store và nhóm internal TestFlight cho chủ tài khoản. Dùng lại integration `qhs_apple` và Distribution certificate đã lưu trên Codemagic.
 
 Release [ios-testflight #1](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea2120a87b4d255fde3891), `e605653`: managed signing assets nhập thành công, preflight dừng vì chỉ nhận PEM trực tiếp. Đã bổ sung hỗ trợ secret reference `@file:`/`@env:` theo CLI, kiểm tra nội dung mà không in khóa hoặc đường dẫn.
 
 Release [ios-testflight #2](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea21bfa87b4d255fde38d1), `31d4f42`: API xác thực đúng app, 31 core + 3 app smoke + 2 UI XCTest đạt; archive và export `SoNoAI.ipa` (1,13 MB) có chữ ký Distribution thành công. Upload bị Apple từ chối với hai lỗi iPad: thiếu icon 152×152 và thiếu các hướng xoay cho multitasking. Nguyên nhân là preset iOS của XcodeGen tại target ghi đè setting iPhone ở project. Đã đặt `TARGETED_DEVICE_FAMILY: "1"` trực tiếp ở target app, bổ sung kiểm tra `UIDeviceFamily == [1]` trên IPA trước upload. Chưa có build TestFlight được Apple nhận tại checkpoint này.
+
+Release [ios-testflight #3](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea2419a87b4d255fde3997), `9d012b5`: core và app smoke đạt; test chụp màn hình đạt, test giao dịch dừng ở bước tìm tên khách sau khi lưu (SoNoUITests.swift:34). Chưa chạy archive/upload trong lần này. Đã tắt autocorrection cho tên/biệt danh và thêm assertion giá trị ô tên trước khi lưu để tránh đổi tên riêng và có chẩn đoán rõ hơn; chưa coi nguyên nhân đã được xác nhận cho đến khi chạy lại.
 
 Build [ios-verify #1](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea101fa87b4d255fde3204), commit `55cbe31`, đã biên dịch thành công SoNoCore trên Mac và chạy 31 XCTest: 30 đạt, 1 lỗi cập nhật khách trùng tên sau khi đã xác nhận tạo riêng. Đã sửa validation cho phép giữ nguyên tên khi cập nhật thông tin khác và bổ sung kiểm tra đổi tên sang tên trùng vẫn bị chặn. Bản sửa chờ build kế tiếp. Các bước sinh project và app/UI test chưa chạy trong build đầu vì pipeline dừng khi core test lỗi. Những phần bên dưới ghi checkpoint kiểm tra Windows trước build này.
 
