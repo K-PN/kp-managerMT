@@ -31,84 +31,128 @@ struct NotebookScanView: View {
     private var page: NotebookPage? { notebook.pages.indices.contains(pageIndex) ? notebook.pages[pageIndex] : nil }
     private var reviewed: [OCRRow] { notebook.rows.filter(\.confirmed) }
     var body: some View {
-        List {
-            Section("Chụp hoặc chọn trang sổ") {
-                Button { camera = true } label: { Label("Quét nhiều trang bằng camera", systemImage: "doc.viewfinder") }.disabled(!VNDocumentCameraViewController.isSupported || processing)
-                PhotosPicker(selection: $photos, maxSelectionCount: 10, matching: .images) { Label("Chọn từ Ảnh", systemImage: "photo.on.rectangle") }.disabled(processing)
-                Text("Camera có công cụ cắt, xoay và chỉnh phối cảnh. Ảnh nguồn được giữ trên iPhone. Tối đa 10 trang và 60 MB cho mỗi bản nháp.").font(.caption).foregroundStyle(.secondary)
-            }
-            if let page {
-                Section("Ảnh nguồn — trang \(pageIndex + 1)/\(notebook.pages.count)") {
-                    if let image = UIImage(data: page.preview) { Image(uiImage: image).resizable().scaledToFit().frame(maxHeight: 320).accessibilityLabel("Trang sổ đang đối chiếu") }
-                    HStack {
-                        Button("Trước") { pageIndex = max(0, pageIndex - 1) }.disabled(pageIndex == 0)
-                        Spacer()
-                        Button("Sau") { pageIndex = min(notebook.pages.count - 1, pageIndex + 1) }.disabled(pageIndex + 1 >= notebook.pages.count)
-                    }.buttonStyle(.borderless)
-                    HStack {
-                        Button("Xoay 90°") { transform(rotate: true) }
-                        Button("Tăng độ rõ") { transform(rotate: false) }
-                    }.buttonStyle(.bordered).disabled(processing)
-                    Button("Đọc trang này bằng Apple Vision") {
-                        if notebook.rows.contains(where: { $0.attachmentID == page.id }) { replaceLocal = true } else { recognize(online: false) }
-                    }.disabled(processing)
-                    Button("Đọc trang này bằng AI online…") { consent = true }.disabled(processing)
-                    Text("Vision có thể không hỗ trợ tốt chữ viết tay tiếng Việt. Chữ, ngày và số tiền đều phải đối chiếu ảnh gốc. Nhận dạng lại sẽ thay các dòng nháp của trang đang xem.").font(.caption).foregroundStyle(.secondary)
-                }
-            }
-            if processing { Section { ProgressView("Đang xử lý trang…"); Button("Hủy xử lý") { request?.cancel(); processing = false } } }
-            Section("Dòng đề xuất — chạm để sửa") {
-                if notebook.rows.isEmpty { Text("Chưa có kết quả nhận dạng. Không có giao dịch nào tự động được ghi.").foregroundStyle(.secondary) }
-                ForEach($notebook.rows) { $row in
-                    NavigationLink { OCRRowEditor(row: $row, image: notebook.pages.first { $0.id == row.attachmentID }?.preview) } label: {
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack { Image(systemName: row.confirmed ? "checkmark.circle.fill" : "exclamationmark.circle").foregroundStyle(row.confirmed ? .teal : .orange); Text(row.customerID.map(model.customerName) ?? row.customerName).font(.headline) }
-                            Text(row.kind.title + " · " + (row.amount.map(VND.string) ?? "Chưa rõ số tiền"))
-                            Text(VietnameseDate.display(row.date)).font(.caption)
-                            if let warning = row.warning { Text(warning).font(.caption).foregroundStyle(.orange) }
-                        }
-                    }
-                }.onDelete { indices in notebook.rows.remove(atOffsets: indices); persist() }
-            }
-            Section("Kiểm tra trước khi nhập") {
-                Text("Đã xác nhận \(reviewed.count)/\(notebook.rows.count) dòng.")
-                if let totals = try? OCRReviewSummary(rows: reviewed) {
-                    LabeledContent("Tổng ghi tăng phải thu", value: VND.string(totals.debt))
-                    LabeledContent("Tổng thu nợ", value: VND.string(totals.collections))
-                    ForEach(totals.customerIDs, id: \.self) { id in
-                        LabeledContent("Dư phải thu dự kiến · \(model.customerName(id))", value: projectedBalance(id))
-                    }
-                }
-                Button("Nhập các dòng đã xác nhận") { importConfirmation = true }.disabled(reviewed.isEmpty || processing || model.busy)
-                Text("Ghi cả nhóm cùng lúc hoặc không ghi dòng nào nếu có lỗi. Dòng trùng sẽ bị chặn; bạn cần xóa hoặc kiểm tra lại.").font(.caption).foregroundStyle(.secondary)
-            }
-            ErrorMessage()
-        }.navigationTitle("Quét sổ viết tay")
+        notebookList
+            .navigationTitle("Quét sổ viết tay")
             .toolbar { Button("Đóng") { dismiss() } }
-            .sheet(isPresented: $camera) { DocumentScanner { data in camera = false; Task { await appendPages(data) } } onCancel: { camera = false } onError: { error in camera = false; model.error = error.localizedDescription } }
-            .task {
-                guard !loaded else { return }; loaded = true
-                do {
-                    if let ledger = model.ledger, let draft = try await ledger.loadDraft(draftID) {
-                        notebook = try JSONDecoder().decode(NotebookDraft.self, from: draft.data)
-                    }
-                } catch { model.error = "Không đọc được bản nháp quét sổ. Bản gốc vẫn được giữ trong dữ liệu sao lưu." }
-            }
-            .onChange(of: photos) { _, items in Task {
-                do {
-                    var data: [Data] = []
-                    for item in items { if let image = try await item.loadTransferable(type: Data.self) { data.append(image) } }
-                    await appendPages(data)
-                } catch { model.error = error.localizedDescription }
-            } }
+            .sheet(isPresented: $camera) { scanner }
+            .task { await loadDraft() }
+            .onChange(of: photos) { _, items in Task { await loadPhotos(items) } }
             .onChange(of: notebook.rows) { _, _ in persist() }
             .onDisappear { request?.cancel(); persist(immediate: true) }
             .confirmationDialog("Chỉ gửi trang đang xem tới proxy AI đã ghép nối. Có thể phát sinh phí và kết quả cần kiểm tra. Các dòng nháp của trang này sẽ được thay thế.", isPresented: $consent, titleVisibility: .visible) {
                 Button("Đồng ý gửi trang này") { recognize(online: true) }
                 Button("Hủy", role: .cancel) { }
             }
-            .confirmationDialog("Thay các dòng nháp của trang này bằng kết quả Vision mới?", isPresented: $replaceLocal, titleVisibility: .visible) { Button("Nhận dạng lại") { recognize(online: false) } }
-            .confirmationDialog("Ghi \(reviewed.count) dòng đã xác nhận vào sổ?", isPresented: $importConfirmation, titleVisibility: .visible) { Button("Xác nhận nhập") { Task { await importRows() } } }
+            .confirmationDialog("Thay các dòng nháp của trang này bằng kết quả Vision mới?", isPresented: $replaceLocal, titleVisibility: .visible) {
+                Button("Nhận dạng lại") { recognize(online: false) }
+            }
+            .confirmationDialog("Ghi \(reviewed.count) dòng đã xác nhận vào sổ?", isPresented: $importConfirmation, titleVisibility: .visible) {
+                Button("Xác nhận nhập") { Task { await importRows() } }
+            }
+    }
+    private var notebookList: some View {
+        List {
+            captureSection
+            if let page { sourceSection(page) }
+            if processing {
+                Section {
+                    ProgressView("Đang xử lý trang…")
+                    Button("Hủy xử lý") { request?.cancel(); processing = false }
+                }
+            }
+            suggestionsSection
+            reviewSection
+            ErrorMessage()
+        }
+    }
+    private var captureSection: some View {
+        Section("Chụp hoặc chọn trang sổ") {
+            Button { camera = true } label: {
+                Label("Quét nhiều trang bằng camera", systemImage: "doc.viewfinder")
+            }.disabled(!VNDocumentCameraViewController.isSupported || processing)
+            PhotosPicker(selection: $photos, maxSelectionCount: 10, matching: .images) {
+                Label("Chọn từ Ảnh", systemImage: "photo.on.rectangle")
+            }.disabled(processing)
+            Text("Camera có công cụ cắt, xoay và chỉnh phối cảnh. Ảnh nguồn được giữ trên iPhone. Tối đa 10 trang và 60 MB cho mỗi bản nháp.").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+    private func sourceSection(_ page: NotebookPage) -> some View {
+        Section("Ảnh nguồn — trang \(pageIndex + 1)/\(notebook.pages.count)") {
+            if let image = UIImage(data: page.preview) {
+                Image(uiImage: image).resizable().scaledToFit().frame(maxHeight: 320).accessibilityLabel("Trang sổ đang đối chiếu")
+            }
+            HStack {
+                Button("Trước") { pageIndex = max(0, pageIndex - 1) }.disabled(pageIndex == 0)
+                Spacer()
+                Button("Sau") { pageIndex = min(notebook.pages.count - 1, pageIndex + 1) }.disabled(pageIndex + 1 >= notebook.pages.count)
+            }.buttonStyle(.borderless)
+            HStack {
+                Button("Xoay 90°") { transform(rotate: true) }
+                Button("Tăng độ rõ") { transform(rotate: false) }
+            }.buttonStyle(.bordered).disabled(processing)
+            Button("Đọc trang này bằng Apple Vision") {
+                if notebook.rows.contains(where: { $0.attachmentID == page.id }) { replaceLocal = true }
+                else { recognize(online: false) }
+            }.disabled(processing)
+            Button("Đọc trang này bằng AI online…") { consent = true }.disabled(processing)
+            Text("Vision có thể không hỗ trợ tốt chữ viết tay tiếng Việt. Chữ, ngày và số tiền đều phải đối chiếu ảnh gốc. Nhận dạng lại sẽ thay các dòng nháp của trang đang xem.").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+    private var suggestionsSection: some View {
+        Section("Dòng đề xuất — chạm để sửa") {
+            if notebook.rows.isEmpty {
+                Text("Chưa có kết quả nhận dạng. Không có giao dịch nào tự động được ghi.").foregroundStyle(.secondary)
+            }
+            ForEach($notebook.rows) { $row in
+                NavigationLink {
+                    OCRRowEditor(row: $row, image: notebook.pages.first { $0.id == row.attachmentID }?.preview)
+                } label: {
+                    OCRSuggestionRow(row: row, customerName: row.customerID.map(model.customerName) ?? row.customerName)
+                }
+            }.onDelete { indices in notebook.rows.remove(atOffsets: indices); persist() }
+        }
+    }
+    private var reviewSection: some View {
+        Section("Kiểm tra trước khi nhập") {
+            Text("Đã xác nhận \(reviewed.count)/\(notebook.rows.count) dòng.")
+            if let totals = try? OCRReviewSummary(rows: reviewed) {
+                LabeledContent("Tổng ghi tăng phải thu", value: VND.string(totals.debt))
+                LabeledContent("Tổng thu nợ", value: VND.string(totals.collections))
+                ForEach(totals.customerIDs, id: \.self) { id in
+                    LabeledContent("Dư phải thu dự kiến · \(model.customerName(id))", value: projectedBalance(id))
+                }
+            }
+            Button("Nhập các dòng đã xác nhận") { importConfirmation = true }.disabled(reviewed.isEmpty || processing || model.busy)
+            Text("Ghi cả nhóm cùng lúc hoặc không ghi dòng nào nếu có lỗi. Dòng trùng sẽ bị chặn; bạn cần xóa hoặc kiểm tra lại.").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+    private var scanner: some View {
+        DocumentScanner { data in
+            camera = false
+            Task { await appendPages(data) }
+        } onCancel: {
+            camera = false
+        } onError: { error in
+            camera = false
+            model.error = error.localizedDescription
+        }
+    }
+    private func loadDraft() async {
+        guard !loaded else { return }; loaded = true
+        do {
+            if let ledger = model.ledger, let draft = try await ledger.loadDraft(draftID) {
+                notebook = try JSONDecoder().decode(NotebookDraft.self, from: draft.data)
+            }
+        } catch { model.error = "Không đọc được bản nháp quét sổ. Bản gốc vẫn được giữ trong dữ liệu sao lưu." }
+    }
+    private func loadPhotos(_ items: [PhotosPickerItem]) async {
+        do {
+            var data: [Data] = []
+            for item in items {
+                if let image = try await item.loadTransferable(type: Data.self) { data.append(image) }
+            }
+            await appendPages(data)
+        } catch { model.error = error.localizedDescription }
     }
     private func projectedBalance(_ id: UUID) -> String {
         do {
@@ -181,6 +225,23 @@ struct NotebookScanView: View {
                 pageIndex = 0; persist(immediate: true)
             }
         } catch { model.error = error.localizedDescription }
+    }
+}
+
+private struct OCRSuggestionRow: View {
+    let row: OCRRow
+    let customerName: String
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Image(systemName: row.confirmed ? "checkmark.circle.fill" : "exclamationmark.circle")
+                    .foregroundStyle(row.confirmed ? Color.teal : Color.orange)
+                Text(customerName).font(.headline)
+            }
+            Text(row.kind.title + " · " + (row.amount.map(VND.string) ?? "Chưa rõ số tiền"))
+            Text(VietnameseDate.display(row.date)).font(.caption)
+            if let warning = row.warning { Text(warning).font(.caption).foregroundStyle(.orange) }
+        }
     }
 }
 

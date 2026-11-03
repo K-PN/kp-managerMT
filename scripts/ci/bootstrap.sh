@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "${CM_BUILD_DIR:?Codemagic workspace is required}"
 if ! command -v xcodegen >/dev/null 2>&1; then
-  HOMEBREW_NO_AUTO_UPDATE=1 brew install xcodegen
+  HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew install xcodegen
 fi
 python3 -m venv .ci-venv
 .ci-venv/bin/python -m pip install --disable-pip-version-check -r scripts/requirements-dev.txt
