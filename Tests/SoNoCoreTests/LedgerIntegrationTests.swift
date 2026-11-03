@@ -19,6 +19,10 @@ final class LedgerIntegrationTests: XCTestCase {
         customer.phone = "0900000000"; try await ledger.saveCustomer(customer)
         let snapshot = try await ledger.snapshot()
         XCTAssertEqual(snapshot.customers.count, 2); XCTAssertEqual(snapshot.audit.count, 3)
+        var other = Customer(name: "Khách khác")
+        try await ledger.saveCustomer(other)
+        other.name = "Nguyen Van Nam"
+        await expectError { try await ledger.saveCustomer(other) }
     }
     func testFinancialWriteAndAuditRollbackTogether() async throws {
         let (ledger, _) = try makeLedger(), customer = Customer(name: "Nam")

@@ -1,5 +1,9 @@
 # Kết quả kiểm tra và việc còn cần chạy
 
+## Cập nhật build cloud đầu tiên
+
+Build [ios-verify #1](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea101fa87b4d255fde3204), commit `55cbe31`, đã biên dịch thành công SoNoCore trên Mac và chạy 31 XCTest: 30 đạt, 1 lỗi cập nhật khách trùng tên sau khi đã xác nhận tạo riêng. Đã sửa validation cho phép giữ nguyên tên khi cập nhật thông tin khác và bổ sung kiểm tra đổi tên sang tên trùng vẫn bị chặn. Bản sửa chờ build kế tiếp. Các bước sinh project và app/UI test chưa chạy trong build đầu vì pipeline dừng khi core test lỗi. Những phần bên dưới ghi checkpoint kiểm tra Windows trước build này.
+
 Ngày 03/11/2026. Môi trường: Windows PowerShell 5.1, workspace mới, không có Swift/Xcode/iOS SDK. Không cài toolchain toàn hệ thống, không có build iOS, không chạy dịch vụ AI hay gửi dữ liệu ra provider.
 
 ## Đã thực hiện trên Windows

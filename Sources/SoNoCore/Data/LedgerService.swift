@@ -15,7 +15,8 @@ public actor LedgerService: CustomerRepository, DebtRepository, TransactionRepos
             let state = try store.snapshot()
             let old = state.customers.first { $0.id == value.id }
             guard old?.mergedInto == nil, value.mergedInto == nil else { throw LedgerError.invalid("Khách này đã được gộp.") }
-            if !allowDuplicate && state.customers.contains(where: { $0.id != value.id && $0.mergedInto == nil && TextKey.normalize($0.name) == TextKey.normalize(value.name) }) { throw LedgerError.duplicateCustomer }
+            let changesName = old.map { TextKey.normalize($0.name) != TextKey.normalize(value.name) } ?? true
+            if changesName && !allowDuplicate && state.customers.contains(where: { $0.id != value.id && $0.mergedInto == nil && TextKey.normalize($0.name) == TextKey.normalize(value.name) }) { throw LedgerError.duplicateCustomer }
             value.createdAt = old?.createdAt ?? Date(); value.updatedAt = Date()
             try store.save(value)
             try store.insert(AuditEvent(entityID: value.id, event: old == nil ? "Tạo khách hàng" : "Sửa khách hàng", oldValue: try old.map(JSONCoding.string), newValue: try JSONCoding.string(value)))

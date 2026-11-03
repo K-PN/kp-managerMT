@@ -26,6 +26,7 @@ workflows:
       - name: Package Simulator preview and real screenshots
         script: bash scripts/ci/package_preview.sh
     artifacts:
+      - DerivedData/Build/Products/Debug-iphonesimulator/SoNoAI.app
       - build/preview/*.zip
       - build/screenshots/**/*
       - build/logs/*.log

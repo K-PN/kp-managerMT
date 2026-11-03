@@ -31,7 +31,10 @@ struct CustomerEditorView: View {
     @State var customer: Customer
     @State private var allowDuplicate = false
     init(customer: Customer = Customer(name: "")) { _customer = State(initialValue: customer) }
-    private var hasDuplicate: Bool { model.customers.contains { $0.id != customer.id && TextKey.normalize($0.name) == TextKey.normalize(customer.name) } }
+    private var hasDuplicate: Bool {
+        if let original = model.state.customers.first(where: { $0.id == customer.id }), TextKey.normalize(original.name) == TextKey.normalize(customer.name) { return false }
+        return model.customers.contains { $0.id != customer.id && TextKey.normalize($0.name) == TextKey.normalize(customer.name) }
+    }
     var body: some View {
         Form {
             Section("Thông tin khách hàng") {
