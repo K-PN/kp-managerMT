@@ -1,12 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 cd "${CM_BUILD_DIR:?Codemagic workspace is required}"
-# Private keys are read by Codemagic CLI from secret environment variables.
+# Codemagic's ios_signing imports the existing distribution certificate and
+# matching profile into the build keychain. No new certificates are created.
 # Never enable shell tracing or put key contents on the command line.
-keychain initialize
-app-store-connect fetch-signing-files "${BUNDLE_ID:?Bundle ID is required}" \
-  --type IOS_APP_STORE --strict-match-identifier --create
-keychain add-certificates
 xcode-project use-profiles \
   --project SoNoAI.xcodeproj \
   --archive-method app-store \

@@ -29,7 +29,6 @@ def fake_environment():
         "APP_STORE_CONNECT_ISSUER_ID": "11111111-1111-1111-1111-111111111111",
         "APP_STORE_CONNECT_KEY_IDENTIFIER": "DEF1234567",
         "APP_STORE_CONNECT_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\nfixture-api\n-----END PRIVATE KEY-----",
-        "CERTIFICATE_PRIVATE_KEY": "-----BEGIN RSA PRIVATE KEY-----\nfixture-signing\n-----END RSA PRIVATE KEY-----",
         "PROJECT_BUILD_NUMBER": "12",
         "MARKETING_VERSION": "1.0.0",
     }
@@ -53,7 +52,7 @@ class PreflightTests(unittest.TestCase):
         cases = [("BUNDLE_ID", "com.example.app"), ("BUNDLE_ID", "vn.sono.*"), ("APPLE_TEAM_ID", "invalid"),
                  ("APP_STORE_APPLE_ID", "vn.sono.app"), ("APP_STORE_CONNECT_ISSUER_ID", "invalid"),
                  ("APP_STORE_CONNECT_KEY_IDENTIFIER", "short"), ("APP_STORE_CONNECT_PRIVATE_KEY", "fake-key"),
-                 ("CERTIFICATE_PRIVATE_KEY", "encrypted-or-truncated"), ("MARKETING_VERSION", "beta1")]
+                 ("MARKETING_VERSION", "beta1")]
         for name, value in cases:
             with self.subTest(name=name):
                 env = fake_environment(); env[name] = value
@@ -176,7 +175,18 @@ class WorkflowTests(unittest.TestCase):
         verify, release = workflows["ios-verify"], workflows["ios-testflight"]
         self.assertNotIn("groups", verify["environment"])
         self.assertNotIn("publishing", verify)
+        self.assertNotIn("integrations", verify)
+        self.assertNotIn("ios_signing", verify["environment"])
         self.assertEqual(release["environment"]["groups"], ["sono_app_store"])
+        self.assertEqual(release["integrations"]["app_store_connect"], "qhs_apple")
+        self.assertEqual(release["environment"]["ios_signing"], {
+            "distribution_type": "app_store", "bundle_identifier": release["environment"]["vars"]["BUNDLE_ID"]})
+        publishing = release["publishing"]["app_store_connect"]
+        self.assertEqual(publishing["auth"], "integration")
+        self.assertTrue(set(publishing).isdisjoint({"api_key", "key_id", "issuer_id"}))
+        signing_script = (ROOT / "scripts/ci/build_ipa.sh").read_text()
+        self.assertNotIn("fetch-signing-files", signing_script)
+        self.assertNotIn("CERTIFICATE_PRIVATE_KEY", signing_script)
         scripts = [step["script"] for step in release["scripts"]]
         signing = next(i for i, script in enumerate(scripts) if "build_ipa.sh" in script)
         self.assertLess(next(i for i, script in enumerate(scripts) if "test_core.sh" in script), signing)

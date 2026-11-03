@@ -37,11 +37,17 @@ workflows:
     name: SoNo AI - Signed IPA and TestFlight upload
     instance_type: mac_mini_m2
     max_build_duration: 90
+    integrations:
+      app_store_connect: qhs_apple
     environment:
       xcode: "26.1"
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: vn.kpn.sonoai
       groups:
         - sono_app_store
       vars:
+        BUNDLE_ID: vn.kpn.sonoai
         MARKETING_VERSION: "1.0.0"
         SONO_INSTALL_SIGNING_TOOLS: "1"
     scripts:
@@ -63,7 +69,7 @@ workflows:
           xcodegen generate --spec project.ci.json
       - name: Test native app on iPhone Simulator
         script: bash scripts/ci/test_ios.sh
-      - name: Fetch signing assets and export signed IPA
+      - name: Apply managed signing assets and export signed IPA
         script: bash scripts/ci/build_ipa.sh
       - name: Verify exported IPA metadata
         script: '"$SONO_PYTHON" scripts/ci/pipeline.py verify-ipa'
@@ -76,9 +82,7 @@ workflows:
       - build/release/metadata.json
     publishing:
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        auth: integration
         # Upload for internal TestFlight selection in App Store Connect.
         # External beta review and App Store submission are separate actions.
         submit_to_testflight: false

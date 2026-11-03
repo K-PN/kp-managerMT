@@ -30,7 +30,7 @@ def required(env: dict, name: str) -> str:
 def preflight(env: dict) -> dict:
     values = {name: required(env, name) for name in (
         "BUNDLE_ID", "APPLE_TEAM_ID", "APP_STORE_APPLE_ID", "APP_STORE_CONNECT_ISSUER_ID",
-        "APP_STORE_CONNECT_KEY_IDENTIFIER", "APP_STORE_CONNECT_PRIVATE_KEY", "CERTIFICATE_PRIVATE_KEY",
+        "APP_STORE_CONNECT_KEY_IDENTIFIER", "APP_STORE_CONNECT_PRIVATE_KEY",
     )}
     if len(values["BUNDLE_ID"]) > 255 or not re.fullmatch(r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+", values["BUNDLE_ID"]):
         raise ConfigurationError("BUNDLE_ID must be an explicit reverse-domain identifier without wildcards.")
@@ -46,19 +46,14 @@ def preflight(env: dict) -> dict:
     except ValueError as error:
         raise ConfigurationError("APP_STORE_CONNECT_ISSUER_ID must be a UUID from App Store Connect.") from error
     api_key = values["APP_STORE_CONNECT_PRIVATE_KEY"]
-    signing_key = values["CERTIFICATE_PRIVATE_KEY"]
     if not (api_key.startswith("-----BEGIN PRIVATE KEY-----") and api_key.endswith("-----END PRIVATE KEY-----")):
         raise ConfigurationError("APP_STORE_CONNECT_PRIVATE_KEY must contain the complete multiline .p8 key.")
-    if not any(signing_key.startswith(f"-----BEGIN {kind}PRIVATE KEY-----") and signing_key.endswith(f"-----END {kind}PRIVATE KEY-----") for kind in ("RSA ", "")):
-        raise ConfigurationError("CERTIFICATE_PRIVATE_KEY must contain the complete unencrypted RSA private key.")
-    if api_key == signing_key:
-        raise ConfigurationError("The App Store API key and distribution signing key must be different keys.")
     if env.get("CM_PULL_REQUEST_NUMBER") or env.get("CM_PULL_REQUEST", "false").lower() == "true":
         raise ConfigurationError("Run the release workflow from a trusted branch, not a pull-request build.")
     version = env.get("MARKETING_VERSION", "1.0.0")
     if not re.fullmatch(r"[1-9][0-9]*\.[0-9]+\.[0-9]+", version):
         raise ConfigurationError("MARKETING_VERSION must use major.minor.patch, for example 1.0.0.")
-    # Return public metadata only. Never serialize or print either private key.
+    # Return public metadata only. Never serialize or print the API private key.
     return {name: values[name] for name in ("BUNDLE_ID", "APPLE_TEAM_ID", "APP_STORE_APPLE_ID")} | {"MARKETING_VERSION": version}
 
 
