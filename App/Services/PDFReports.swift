@@ -13,7 +13,7 @@ enum PDFReports {
     private static func render(title: String, paragraphs: [String]) throws -> URL {
         let bounds = CGRect(x: 0, y: 0, width: 595, height: 842)
         let renderer = UIGraphicsPDFRenderer(bounds: bounds)
-        let data = renderer.pdfData { context in
+        let data: Data = renderer.pdfData { context in
             var page = 0, y: CGFloat = 0
             func newPage() {
                 context.beginPage(); page += 1; y = 44
@@ -25,7 +25,7 @@ enum PDFReports {
             // Bound each line so even a very long note flows across pages.
             for paragraph in paragraphs {
                 for line in wrap(paragraph, width: 515, attributes: attributes) {
-                    let height = max(20, (line as NSString).boundingRect(with: CGSize(width: 515, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: attributes, context: nil).height + 4)
+                    let height = max(20, (line as NSString).boundingRect(with: CGSize(width: 515, height: CGFloat.greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: attributes, context: nil).height + 4)
                     if y + height > 790 { newPage() }
                     (line as NSString).draw(in: CGRect(x: 40, y: y, width: 515, height: height), withAttributes: attributes)
                     y += height
