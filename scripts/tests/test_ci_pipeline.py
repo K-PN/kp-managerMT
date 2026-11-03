@@ -63,6 +63,26 @@ class PreflightTests(unittest.TestCase):
             env = fake_environment(); env[name] = value
             with self.assertRaises(pipeline.ConfigurationError): pipeline.preflight(env)
 
+    def test_cli_secret_references_validate_without_leaking(self):
+        env = fake_environment()
+        key = env["APP_STORE_CONNECT_PRIVATE_KEY"]
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "fixture.p8"
+            path.write_text(key, encoding="utf-8")
+            env["APP_STORE_CONNECT_PRIVATE_KEY"] = f"@file:{path}"
+            result = pipeline.preflight(env)
+            self.assertNotIn(folder, json.dumps(result))
+            self.assertNotIn("fixture-api", json.dumps(result))
+            path.unlink()
+            with self.assertRaises(pipeline.ConfigurationError) as failure:
+                pipeline.preflight(env)
+            self.assertNotIn(folder, str(failure.exception))
+        env["APP_STORE_CONNECT_PRIVATE_KEY"] = "@env:INTEGRATION_KEY"
+        env["INTEGRATION_KEY"] = key
+        self.assertNotIn("fixture-api", json.dumps(pipeline.preflight(env)))
+        del env["INTEGRATION_KEY"]
+        with self.assertRaises(pipeline.ConfigurationError): pipeline.preflight(env)
+
 
 class BuildAndSimulatorTests(unittest.TestCase):
     def test_build_number_first_remote_existing_counter_and_offset(self):

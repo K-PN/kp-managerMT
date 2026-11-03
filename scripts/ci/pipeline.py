@@ -46,8 +46,17 @@ def preflight(env: dict) -> dict:
     except ValueError as error:
         raise ConfigurationError("APP_STORE_CONNECT_ISSUER_ID must be a UUID from App Store Connect.") from error
     api_key = values["APP_STORE_CONNECT_PRIVATE_KEY"]
+    # Codemagic CLI accepts secret references as well as literal PEM contents.
+    # Resolve only for validation; never print or serialize key contents/paths.
+    if api_key.startswith("@file:"):
+        try:
+            api_key = Path(api_key[6:]).read_text(encoding="utf-8").strip()
+        except (OSError, ValueError):
+            raise ConfigurationError("Cannot read the App Store Connect integration key file.") from None
+    elif api_key.startswith("@env:"):
+        api_key = env.get(api_key[5:], "").strip()
     if not (api_key.startswith("-----BEGIN PRIVATE KEY-----") and api_key.endswith("-----END PRIVATE KEY-----")):
-        raise ConfigurationError("APP_STORE_CONNECT_PRIVATE_KEY must contain the complete multiline .p8 key.")
+        raise ConfigurationError("APP_STORE_CONNECT_PRIVATE_KEY must contain a complete .p8 key or a valid CLI @file:/@env: reference.")
     if env.get("CM_PULL_REQUEST_NUMBER") or env.get("CM_PULL_REQUEST", "false").lower() == "true":
         raise ConfigurationError("Run the release workflow from a trusted branch, not a pull-request build.")
     version = env.get("MARKETING_VERSION", "1.0.0")
