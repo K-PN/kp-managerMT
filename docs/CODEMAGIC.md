@@ -1,13 +1,13 @@
 # Build IPA và dùng TestFlight từ Windows
 
-Repository: [K-PN/kp-managerMT](https://github.com/K-PN/kp-managerMT). Source đã được push lên branch `main`. Codemagic đã kết nối ứng dụng [kp-managerMT](https://codemagic.io/app/6aea10057cef5b806068b14c/settings); build kiểm tra đầu được khởi chạy. Xem [QUICK_TEST.md](QUICK_TEST.md) để mở build và thực hiện kịch bản thử.
+Repository: [K-PN/kp-managerMT](https://github.com/K-PN/kp-managerMT). Source đã được push lên branch `main`. Codemagic [build #6](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea18dba87b4d255fde356e) đã thành công với 36/36 XCTest, gói Simulator và ảnh giao diện thật. Xem [QUICK_TEST.md](QUICK_TEST.md) để mở bản test và thực hiện kịch bản thử. Chưa ký/upload IPA lên TestFlight.
 
 Có hai workflow trong [codemagic.yaml](../codemagic.yaml):
 
 - `ios-verify`: không cần tài khoản/khóa Apple; kiểm tra source và CI scripts, chạy Swift package tests, sinh Xcode project, chạy app/UI tests trên iPhone Simulator. Nếu đạt, xuất `SoNoAI-simulator.zip` và screenshot attachments của giao diện thật trong Artifacts.
 - `ios-testflight`: kiểm tra cấu hình, chạy cùng các test, lấy số build tiếp theo, lấy/tạo chứng chỉ và provisioning profile, archive Release, xuất IPA, kiểm tra metadata rồi upload App Store Connect. Sau Apple xử lý, bạn chọn build vào nhóm TestFlight nội bộ trên trang web.
 
-Hai workflow chạy thủ công, không tự kích hoạt khi push. GitHub Actions cũ cũng chuyển sang chạy thủ công để dùng khi cần. Pipeline mới chưa được chạy trên macOS; các kiểm tra Windows không thay thế build thật.
+Hai workflow chạy thủ công, không tự kích hoạt khi push. GitHub Actions cũ cũng chuyển sang chạy thủ công để dùng khi cần. Workflow kiểm tra đã chạy trên macOS với 36/36 XCTest core/app/UI đạt; kết quả ghi ở [VERIFICATION.md](VERIFICATION.md). Workflow ký IPA chưa chạy.
 
 ## Bạn đã có Apple Developer: ID nào cần tạo mới?
 
@@ -42,7 +42,7 @@ Khi build đạt, Artifacts có gói Simulator và ảnh chụp dashboard, khác
 
 Pipeline dùng Mac mini M2 với Xcode **26.1**, tự cài XcodeGen nếu chưa có và tạo Python venv. Signing CLI pin **codemagic-cli-tools 0.70.2** trong workflow phát hành. Xem [image Xcode 26.1](https://docs.codemagic.io/specs-macos/xcode-26-1/) và [Codemagic native iOS](https://docs.codemagic.io/yaml-quick-start/building-a-native-ios-app/).
 
-Mọi thao tác tài chính và UI hiện mới là source chưa qua compiler Xcode. Nếu build đầu lỗi, mở step và tải `build/logs/*.log` để xử lý lỗi cụ thể. Pipeline dừng nếu test lỗi, không tiếp tục ký/upload.
+Nếu build lỗi, mở step và tải `build/logs/*.log` để xử lý lỗi cụ thể. Các lỗi compiler PDF và độ phức tạp màn hình quét đã được sửa sau các lần build đầu; kết quả kiểm chứng ghi trong VERIFICATION.md. Pipeline dừng nếu test lỗi, không tiếp tục ký/upload.
 
 ## 3. Tạo distribution private key bằng Windows
 

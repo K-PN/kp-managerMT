@@ -1,8 +1,20 @@
 # Kết quả kiểm tra và việc còn cần chạy
 
-## Cập nhật build cloud đầu tiên
+## Cập nhật build cloud
 
 Build [ios-verify #1](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea101fa87b4d255fde3204), commit `55cbe31`, đã biên dịch thành công SoNoCore trên Mac và chạy 31 XCTest: 30 đạt, 1 lỗi cập nhật khách trùng tên sau khi đã xác nhận tạo riêng. Đã sửa validation cho phép giữ nguyên tên khi cập nhật thông tin khác và bổ sung kiểm tra đổi tên sang tên trùng vẫn bị chặn. Bản sửa chờ build kế tiếp. Các bước sinh project và app/UI test chưa chạy trong build đầu vì pipeline dừng khi core test lỗi. Những phần bên dưới ghi checkpoint kiểm tra Windows trước build này.
+
+Build [ios-verify #2](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea10f7a87b4d255fde325f), commit `d9c6d2e`: **31/31 core XCTest đạt**, XcodeGen tạo project thành công, iPhone 17 Pro Simulator khởi động. Compiler iOS phát hiện `greatestFiniteMagnitude` mơ hồ giữa CGFloat/Double trong `PDFReports.swift`; đã chỉ rõ kiểu CGFloat và Data ở commit `c5a07aa`. Chưa có app/UI test chạy thành công trong build này; tệp `.app` tự thu thập khi build lỗi không được coi là bản dùng thử hoàn chỉnh.
+
+Build [ios-verify #3](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea1300a87b4d255fde332c), `c5a07aa`: core 31/31 đạt, lỗi PDF đã qua; compiler báo body SwiftUI của NotebookScanView quá phức tạp để type-check. Đã tách thành các view riêng và giữ nguyên chuỗi tiếng Việt, xử lý nghiệp vụ ở `085ed0c`.
+
+Build [ios-verify #4](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea159fa87b4d255fde342d), `085ed0c`: core 31/31 đạt, app và test target biên dịch thành công cho Simulator arm64/x86_64, ứng dụng đã chạy trên iPhone 17 Pro. App smoke 2/3 đạt; test đọc Keychain thật lỗi vì app Simulator không ký mã. UI tests 0/2 đạt: ảnh thật xác nhận nút micro che thanh tab. Đã đổi bố cục sang VStack để tách vùng bấm; thay smoke test phụ thuộc Keychain thật bằng kiểm tra URL/token/hạn phiên không hợp lệ phải bị từ chối trước khi ghi Keychain. Không bỏ qua lỗi đọc Keychain trong ứng dụng.
+
+Build [ios-verify #5](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea1731a87b4d255fde34c3), `6d1f823`: core 31/31, app smoke 3/3 và UI chụp bốn màn hình chính đều đạt. Luồng tạo khách chạy được, dừng ở nút Ghi sổ vì UI test chưa bật công tắc xác nhận khi bàn phím số còn mở. Video và ảnh được giữ để chẩn đoán.
+
+**Build [ios-verify #6](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea18dba87b4d255fde356e), `a65fd40`, thành công sau 5m52s:** core 31/31, app smoke 3/3, UI 2/2, tổng 36/36 XCTest đạt. App được biên dịch cho Simulator arm64/x86_64 và chạy trên iPhone 17 Pro. UI test mở bốn màn hình, tạo khách, ghi nợ 500.000đ, thu 200.000đ và kiểm tra phải thu còn 300.000đ. Có gói SoNoAI-simulator.zip, raw .app, xcresult, log và ảnh attachments. Đã tải artifact về Windows, đối chiếu log 31 + 5 test đạt, không có test thất bại; kiểm tra ZIP có executable, Info.plist và platform iPhoneSimulator. Sáu [ảnh chạy thật](screenshots/README.md) đã lưu trong repo. Chưa ký/upload App Store Connect; chưa có IPA hoặc TestFlight.
+
+Script CI giới hạn chờ boot 420 giây, chạy UI tests tuần tự và lưu screenshot attachments cả khi test lỗi. Đã mô phỏng trên Bash: build lỗi 23, export ảnh cũng lỗi 13, pipeline vẫn trả đúng lỗi build 23.
 
 Ngày 03/11/2026. Môi trường: Windows PowerShell 5.1, workspace mới, không có Swift/Xcode/iOS SDK. Không cài toolchain toàn hệ thống, không có build iOS, không chạy dịch vụ AI hay gửi dữ liệu ra provider.
 
@@ -22,13 +34,13 @@ Các kiểm tra SQLite dùng Python SQLite thực thi chính tệp SQL migration
 
 Sau khi thêm Codemagic, `python -m unittest discover -s scripts/tests -v` chạy đạt **17 kiểm thử pipeline**: preflight ID/PEM và không ghi keys vào metadata, xử lý số build đầu/đang có/lỗi, chọn Simulator, sinh spec không sửa source, chặn nhầm Apple ID sang Bundle ID app cũ, dừng khi API lỗi, kích thước PNG không alpha, kiểm tra metadata và tài nguyên signing của IPA fixture, thứ tự test trước signing, cú pháp Bash, mô phỏng Swift trả mã lỗi 47 qua `tee`, tạo key fixture không ghi đè và dọn file khi OpenSSL lỗi. Không có test nào gọi Apple, tạo chứng chỉ hoặc kiểm tra chữ ký IPA thật.
 
-## Đã viết nhưng chưa chạy
+## Bộ kiểm thử XCTest
 
 Tổng cộng **34 phương thức XCTest** trong core và app. Core gồm: tạo/sửa/trùng/gộp khách; ghi/thu một phần/toàn bộ/vượt nợ; phải trả/trả trước; overflow; FIFO; hoàn tác và thay thế; rebuild số dư; báo cáo; CSV injection; parser tiền tiếng Việt; số lượng × đơn giá; intent/query/mơ hồ/trùng tên; OCR example/review/validation/duplicate; atomic audit; lưu/reopen ngoại tuyến và draft; restore validation/nhật ký; migration v1 và schema mới hơn; mã hóa backup/mật khẩu sai/tamper.
 
 Bổ sung **2 UI tests** trong `AppUITests`: chụp các màn hình chính; tạo khách rồi ghi nợ 500.000, thu 200.000 và kiểm tra dư 300.000. Chỉ dùng database riêng của Debug Simulator, không trộn dữ liệu thử vào sổ thông thường. Hai test này chưa chạy trên môi trường Windows.
 
-`AppTests` có smoke test định dạng VND, ảnh hỏng và đọc cấu hình Keychain mà không gọi mạng. Codemagic đã cấu hình chạy Swift package tests rồi sinh project và chạy native app tests trước khi ký mã; GitHub Actions giữ làm dự phòng thủ công. CI chưa chạy, không có trạng thái pass cho XCTest hoặc build.
+`AppTests` kiểm tra định dạng VND, từ chối ảnh hỏng, và từ chối URL/token/hạn phiên AI không hợp lệ trước khi ghi Keychain. Không gọi mạng. Toàn bộ core/app/UI XCTest đã chạy đạt ở build #6; GitHub Actions giữ làm dự phòng thủ công. Keychain với cấu hình hợp lệ cần thử trên thiết bị/bản được ký mã; bản Simulator không chứng minh được việc lưu/đọc khóa trên iPhone.
 
 ## Trình tự kiểm chứng trên Mac
 

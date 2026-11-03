@@ -4,7 +4,7 @@
 
 ## Xem kết quả build thật
 
-Repository đã được push lên [K-PN/kp-managerMT](https://github.com/K-PN/kp-managerMT). Ứng dụng Codemagic: [kp-managerMT](https://codemagic.io/app/6aea10057cef5b806068b14c/settings). Build kiểm tra đầu: [ios-verify #1](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea101fa87b4d255fde3204).
+Repository: [K-PN/kp-managerMT](https://github.com/K-PN/kp-managerMT). Bản test đã đạt: [ios-verify #6](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea18dba87b4d255fde356e), source `a65fd40`, **36/36 XCTest đạt** (31 core + 3 app smoke + 2 UI). Thời gian 5m52s trên Mac mini M2. UI đã tạo khách, ghi nợ 500.000đ, thu 200.000đ và kiểm tra dư 300.000đ.
 
 `ios-verify` chạy trên Mac mini M2, gồm XCTest core và UI test trên iPhone Simulator. Nếu đạt, Artifacts có:
 
@@ -13,6 +13,12 @@ Repository đã được push lên [K-PN/kp-managerMT](https://github.com/K-PN/k
 - Log và `xcresult`: kết quả chạy thật để chẩn đoán nếu build hoặc UI test lỗi.
 
 Ảnh chỉ được tạo khi UI test chạy app; không có ảnh giao diện giả thay cho kết quả build. Simulator không kiểm chứng đầy đủ camera, micro, Face ID hay chất lượng nhận dạng.
+
+## Bấm thử trên Windows bằng App Preview
+
+Codemagic đã nhận diện artifact `.app` và hiển thị **Quick launch** trên trang build. Khi build ứng dụng đạt, bấm nút này để mở app native trong iPhone Simulator trên trình duyệt Windows. Tài khoản hiện hiển thị **Start trial — 100 free minutes**; chưa bật trial trong phiên triển khai. Theo [tài liệu Codemagic](https://docs.codemagic.io/yaml-distributing/app-preview/), App Preview dành cho team Pay as you go, sau 100 phút có phí $0.095/phút. Nếu trang yêu cầu đổi gói/nhập thẻ, chủ tài khoản cần tự quyết định; tải `.app` về Windows không thay thế Simulator.
+
+Các ảnh từ build #6: [Tổng quan](screenshots/01-dashboard.png), [Khách hàng](screenshots/02-customers.png), [Sổ giao dịch](screenshots/03-ledger.png), [Cài đặt](screenshots/04-settings.png), [sau ghi nợ](screenshots/05-customer-after-debt.png), [sau thu một phần](screenshots/06-customer-after-partial-payment.png). App record/khóa ký Apple không cần cho cách chạy thử Simulator này.
 
 ## Test trên iPhone qua TestFlight
 

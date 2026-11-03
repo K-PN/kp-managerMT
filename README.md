@@ -2,15 +2,15 @@
 
 Ứng dụng iPhone cá nhân bằng **Swift + SwiftUI**, iOS 17 trở lên. Sổ khách hàng, giao dịch, ảnh và nhật ký nằm trong SQLite trên iPhone. Không có tài khoản ứng dụng, quảng cáo, Firebase hay Supabase. Tiền dùng `Int64` nguyên đồng; lịch và hiển thị dùng `Asia/Ho_Chi_Minh`.
 
-**Trạng thái:** đã tạo mã nguồn, cấu hình XcodeGen và bộ XCTest. Máy phát triển hiện tại là Windows, không có Swift, Xcode hoặc iOS SDK. **Chưa biên dịch Swift, chưa chạy XCTest, chưa chạy Simulator/iPhone; chưa đủ căn cứ để coi là bản phát hành dùng cho dữ liệu thật.** Xem [PROJECT_PLAN.md](PROJECT_PLAN.md) và [báo cáo kiểm tra](docs/VERIFICATION.md).
+**Trạng thái:** đã có app native chạy trên iPhone Simulator. [Codemagic build #6](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea18dba87b4d255fde356e), source `a65fd40`, đạt **36/36 XCTest**: 31 core, 3 app smoke, 2 UI. Luồng giao diện tạo khách → ghi nợ 500.000đ → thu 200.000đ → dư 300.000đ đã đạt. Có gói Simulator và [ảnh chạy thật](docs/screenshots/README.md). **Chưa có IPA/TestFlight và chưa kiểm chứng trên iPhone thật.** Xem [báo cáo kiểm tra](docs/VERIFICATION.md).
 
-Source đã push lên GitHub và build Codemagic đầu tiên đã được khởi chạy. [Mở build và kịch bản test](docs/QUICK_TEST.md). Trạng thái build cuối được hiển thị trên Codemagic; đoạn trạng thái phía trên mô tả checkpoint trước khi có kết quả cloud.
+Source đã push lên GitHub. [Mở build và kịch bản test](docs/QUICK_TEST.md); kết quả cập nhật trên trang Codemagic.
 
 ## Build và cài qua TestFlight khi không có Mac
 
 Phương án chính đã chọn là **Codemagic**. [Hướng dẫn đầy đủ từ Windows](docs/CODEMAGIC.md) giải thích cách tạo Bundle ID/app mới trong tài khoản Apple Developer hiện tại, nối GitHub `K-PN/kp-managerMT`, chạy kiểm tra, cấu hình signing và upload TestFlight.
 
-`codemagic.yaml` có `ios-verify` không cần khóa Apple và `ios-testflight` ký IPA rồi upload App Store Connect. Các bước test phải đạt trước khi ký/upload. Hai workflow chạy thủ công; chưa chạy cloud, chưa có IPA. Private keys nhập trong group Secret của Codemagic, không đưa vào repo.
+`codemagic.yaml` có `ios-verify` không cần khóa Apple và `ios-testflight` ký IPA rồi upload App Store Connect. Các bước test phải đạt trước khi ký/upload. Hai workflow chạy thủ công; workflow kiểm tra đã chạy cloud, workflow ký IPA chưa chạy. Private keys nhập trong group Secret của Codemagic, không đưa vào repo.
 
 ## Mở và kiểm tra trên Mac
 
@@ -23,7 +23,7 @@ xcodegen generate
 open SoNoAI.xcodeproj
 ```
 
-Chọn scheme **SoNoAI**, chọn một iPhone Simulator có sẵn, rồi **Product → Test** và **Run**. Scheme chạy `SoNoAppTests`; bộ kiểm thử nghiệp vụ, SQLite và sao lưu chạy bằng `swift test`. Không cần API key để build hoặc sử dụng phần lõi.
+Chọn scheme **SoNoAI**, chọn một iPhone Simulator có sẵn, rồi **Product → Test** và **Run**. Scheme chạy `SoNoAppTests` và `SoNoUITests`; bộ kiểm thử nghiệp vụ, SQLite và sao lưu chạy bằng `swift test`. Không cần API key để build hoặc sử dụng phần lõi.
 
 Ví dụ chạy từ terminal, thay tên Simulator bằng thiết bị cài trên máy:
 
@@ -34,7 +34,7 @@ xcodebuild -project SoNoAI.xcodeproj -scheme SoNoAI \
   -derivedDataPath DerivedData CODE_SIGNING_ALLOWED=NO test
 ```
 
-GitHub Actions trong `.github/workflows/ios.yml` giữ làm phương án chạy thủ công dự phòng; Codemagic là pipeline chính. Cả hai chưa được chạy trong phiên triển khai này.
+GitHub Actions trong `.github/workflows/ios.yml` giữ làm phương án chạy thủ công dự phòng và chưa chạy; Codemagic là pipeline chính và đã chạy kiểm tra cloud.
 
 ## Cài trên iPhone cá nhân
 
