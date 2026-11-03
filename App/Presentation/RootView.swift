@@ -24,13 +24,13 @@ struct RootView: View {
                     ErrorMessage()
                 }.padding()
             } else {
-                TabView {
-                    NavigationStack { DashboardView() }.tabItem { Label("Tổng quan", systemImage: "square.grid.2x2.fill") }
-                    NavigationStack { CustomersView() }.tabItem { Label("Khách hàng", systemImage: "person.2.fill") }
-                    NavigationStack { LedgerView() }.tabItem { Label("Sổ giao dịch", systemImage: "book.closed.fill") }
-                    NavigationStack { SettingsView() }.tabItem { Label("Cài đặt", systemImage: "gearshape.fill") }
-                }
-                .safeAreaInset(edge: .bottom, spacing: 0) {
+                VStack(spacing: 0) {
+                    TabView {
+                        NavigationStack { DashboardView() }.tabItem { Label("Tổng quan", systemImage: "square.grid.2x2.fill") }
+                        NavigationStack { CustomersView() }.tabItem { Label("Khách hàng", systemImage: "person.2.fill") }
+                        NavigationStack { LedgerView() }.tabItem { Label("Sổ giao dịch", systemImage: "book.closed.fill") }
+                        NavigationStack { SettingsView() }.tabItem { Label("Cài đặt", systemImage: "gearshape.fill") }
+                    }
                     Button { voice = true } label: { Label("Nói để ghi sổ hoặc tra cứu", systemImage: "mic.fill").font(.headline).frame(maxWidth: .infinity).padding(13) }
                         .buttonStyle(.borderedProminent).padding(.horizontal).padding(.vertical, 6).background(.regularMaterial)
                 }
