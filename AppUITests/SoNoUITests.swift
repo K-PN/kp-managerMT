@@ -49,11 +49,18 @@ final class SoNoUITests: XCTestCase {
             app.buttons["Thu nợ / thu khoản vay"].tap()
         }
         field.tap(); field.typeText(amount)
+        let done = app.buttons["transaction.done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 5))
+        done.tap()
         let confirmation = app.switches["transaction.confirmed"]
-        if !confirmation.isHittable { app.swipeUp() }
-        confirmation.tap()
+        for _ in 0..<3 where !confirmation.isHittable { app.swipeUp() }
+        // SwiftUI exposes the whole labelled row as a switch; target its control end.
+        confirmation.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        screenshot("draft-confirmation-\(amount)")
+        XCTAssertEqual(confirmation.value as? String, "1")
         let save = app.buttons["transaction.save"]
-        XCTAssertTrue(save.isEnabled)
+        expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: save)
+        waitForExpectations(timeout: 5)
         save.tap()
         XCTAssertTrue(app.buttons["customer.newTransaction"].waitForExistence(timeout: 10))
     }

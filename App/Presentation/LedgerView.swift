@@ -55,6 +55,7 @@ struct TransactionEditorView: View {
     @State private var dueDate = Date()
     @State private var note: String
     @State private var confirmed = false
+    @FocusState private var amountFocused: Bool
     @State private var photo: PhotosPickerItem?
     @State private var attachments: [Attachment] = []
     @State private var reason = ""
@@ -79,7 +80,7 @@ struct TransactionEditorView: View {
                     if let original, !model.customers.contains(where: { $0.id == original.customerID }) { Text(model.customerName(original.customerID)).tag(Optional(original.customerID)) }
                 }.disabled(original != nil)
                 Picker("Loại", selection: $kind) { ForEach(TransactionKind.editable, id: \.self) { Text($0.title).tag($0) } }.accessibilityIdentifier("transaction.kind")
-                TextField("Số tiền (đồng)", text: $amount).keyboardType(.numberPad).accessibilityIdentifier("transaction.amount")
+                TextField("Số tiền (đồng)", text: $amount).keyboardType(.numberPad).focused($amountFocused).accessibilityIdentifier("transaction.amount")
                 if let parsedAmount { Text(VND.string(parsedAmount)).font(.title3.bold()).foregroundStyle(.teal) }
                 DatePicker("Ngày giao dịch", selection: $effectiveDate, in: ...Date(), displayedComponents: [.date, .hourAndMinute])
                 Toggle("Có ngày đến hạn", isOn: $hasDue)
@@ -97,10 +98,15 @@ struct TransactionEditorView: View {
                 Toggle("Tôi đã kiểm tra khách, số tiền, ngày và loại", isOn: $confirmed).accessibilityIdentifier("transaction.confirmed")
             }
             ErrorMessage()
-        }.navigationTitle(original == nil ? "Ghi giao dịch" : "Điều chỉnh giao dịch")
+        }.scrollDismissesKeyboard(.interactively)
+            .navigationTitle(original == nil ? "Ghi giao dịch" : "Điều chỉnh giao dịch")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Đóng") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) { Button("Ghi sổ") { Task { await save() } }.disabled(!confirmed || parsedAmount == nil || customerID == nil || model.busy || original != nil && reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).accessibilityIdentifier("transaction.save") }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Xong") { amountFocused = false }.accessibilityIdentifier("transaction.done")
+                }
             }
             .onChange(of: photo) { _, value in Task {
                 do {
