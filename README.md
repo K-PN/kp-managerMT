@@ -2,7 +2,7 @@
 
 Ứng dụng iPhone cá nhân bằng **Swift + SwiftUI**, iOS 17 trở lên. Sổ khách hàng, giao dịch, ảnh và nhật ký nằm trong SQLite trên iPhone. Không có tài khoản ứng dụng, quảng cáo, Firebase hay Supabase. Tiền dùng `Int64` nguyên đồng; lịch và hiển thị dùng `Asia/Ho_Chi_Minh`.
 
-**Trạng thái:** đã có app native chạy trên iPhone Simulator. [Codemagic build #6](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea18dba87b4d255fde356e), source `a65fd40`, đạt **36/36 XCTest**: 31 core, 3 app smoke, 2 UI. Luồng giao diện tạo khách → ghi nợ 500.000đ → thu 200.000đ → dư 300.000đ đã đạt. Có gói Simulator và [ảnh chạy thật](docs/screenshots/README.md). **Chưa có IPA/TestFlight và chưa kiểm chứng trên iPhone thật.** Xem [báo cáo kiểm tra](docs/VERIFICATION.md).
+**Trạng thái:** đã có app native chạy trên iPhone Simulator và IPA ký Distribution. [Build ios-testflight #2](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea21bfa87b4d255fde38d1), source `31d4f42`, đạt **36/36 XCTest**: 31 core, 3 app smoke, 2 UI; archive/export IPA thành công. Apple từ chối upload vì cấu hình target mặc định có iPad; đã sửa target về iPhone và đang build lại. Luồng tạo khách → ghi nợ 500.000đ → thu 200.000đ → dư 300.000đ đã đạt. Có [ảnh chạy thật](docs/screenshots/README.md). **Chưa có bản cài TestFlight và chưa kiểm chứng trên iPhone thật.** Xem [báo cáo kiểm tra](docs/VERIFICATION.md).
 
 Source đã push lên GitHub. [Mở build và kịch bản test](docs/QUICK_TEST.md); kết quả cập nhật trên trang Codemagic.
 
@@ -10,7 +10,7 @@ Source đã push lên GitHub. [Mở build và kịch bản test](docs/QUICK_TEST
 
 Phương án chính đã chọn là **Codemagic**. [Hướng dẫn đầy đủ từ Windows](docs/CODEMAGIC.md) giải thích cách tạo Bundle ID/app mới trong tài khoản Apple Developer hiện tại, nối GitHub `K-PN/kp-managerMT`, chạy kiểm tra, cấu hình signing và upload TestFlight.
 
-`codemagic.yaml` có `ios-verify` không cần khóa Apple và `ios-testflight` ký IPA rồi upload App Store Connect. Các bước test phải đạt trước khi ký/upload. Hai workflow chạy thủ công; workflow kiểm tra đã chạy cloud, workflow ký IPA chưa chạy. Private keys nhập trong group Secret của Codemagic, không đưa vào repo.
+`codemagic.yaml` có `ios-verify` không cần khóa Apple và `ios-testflight` ký IPA rồi upload App Store Connect. Các bước test phải đạt trước khi ký/upload. Hai workflow chạy thủ công. Bản ký dùng integration `qhs_apple` và managed signing assets trong Codemagic; group `sono_app_store` giữ Team ID và Apple ID của app mới. Không đưa private keys vào repo.
 
 ## Mở và kiểm tra trên Mac
 

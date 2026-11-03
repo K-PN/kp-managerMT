@@ -14,15 +14,15 @@ Repository: [K-PN/kp-managerMT](https://github.com/K-PN/kp-managerMT). Bản tes
 
 Ảnh chỉ được tạo khi UI test chạy app; không có ảnh giao diện giả thay cho kết quả build. Simulator không kiểm chứng đầy đủ camera, micro, Face ID hay chất lượng nhận dạng.
 
-## Bấm thử trên Windows bằng App Preview
+## Ảnh chạy thật và tùy chọn App Preview
 
-Codemagic đã nhận diện artifact `.app` và hiển thị **Quick launch** trên trang build. Khi build ứng dụng đạt, bấm nút này để mở app native trong iPhone Simulator trên trình duyệt Windows. Tài khoản hiện hiển thị **Start trial — 100 free minutes**; chưa bật trial trong phiên triển khai. Theo [tài liệu Codemagic](https://docs.codemagic.io/yaml-distributing/app-preview/), App Preview dành cho team Pay as you go, sau 100 phút có phí $0.095/phút. Nếu trang yêu cầu đổi gói/nhập thẻ, chủ tài khoản cần tự quyết định; tải `.app` về Windows không thay thế Simulator.
+Người dùng đã chọn **TestFlight trên iPhone**. Chưa bật trial App Preview. Codemagic có **Quick launch** cho artifact Simulator, nhưng đây là lựa chọn riêng có thể yêu cầu gói trả phí; tải `.app` về Windows không thay thế Simulator. Xem [tài liệu App Preview](https://docs.codemagic.io/yaml-distributing/app-preview/) nếu sau này cần cách này.
 
 Các ảnh từ build #6: [Tổng quan](screenshots/01-dashboard.png), [Khách hàng](screenshots/02-customers.png), [Sổ giao dịch](screenshots/03-ledger.png), [Cài đặt](screenshots/04-settings.png), [sau ghi nợ](screenshots/05-customer-after-debt.png), [sau thu một phần](screenshots/06-customer-after-partial-payment.png). App record/khóa ký Apple không cần cho cách chạy thử Simulator này.
 
 ## Test trên iPhone qua TestFlight
 
-Cần hoàn tất app record Sổ Nợ AI mới, Bundle ID riêng, group `sono_app_store`, chạy `ios-testflight` và thêm build vào nhóm tester sau Apple processing. Xem [CODEMAGIC.md](CODEMAGIC.md). App Store Connect tại thời điểm kiểm tra chỉ có QHS Manager và đang hiển thị yêu cầu Account Holder xem/chấp nhận thỏa thuận Developer cập nhật; chủ tài khoản cần tự thực hiện nếu Apple chặn upload.
+Đã tạo app record **Sổ Nợ AI**, Apple ID **6830292186**, Bundle ID **vn.kpn.sonoai** và nhóm **SoNo AI Internal** với tài khoản chủ sở hữu. Chủ tài khoản đã chấp nhận thỏa thuận Developer cập nhật. Codemagic đã có group `sono_app_store`, integration và provisioning profile; release workflow đang được kiểm chứng. Sau upload và Apple processing, thêm build vào nhóm này. Xem [CODEMAGIC.md](CODEMAGIC.md).
 
 Khi cài được bản TestFlight, dùng dữ liệu thử riêng:
 

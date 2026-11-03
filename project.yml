@@ -43,6 +43,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: vn.sono.personal
+        # Override XcodeGen's iOS target preset (iPhone + iPad).
+        TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
   SoNoAppTests:
     type: bundle.unit-test

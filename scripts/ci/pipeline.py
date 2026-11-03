@@ -157,6 +157,8 @@ def verify_ipa(path: Path, metadata: dict) -> None:
         for key, expected in (("CFBundleIdentifier", metadata["BUNDLE_ID"]), ("CFBundleVersion", metadata["BUILD_NUMBER"]), ("CFBundleShortVersionString", metadata["MARKETING_VERSION"])):
             if info.get(key) != expected:
                 raise ConfigurationError(f"Exported IPA has unexpected {key}.")
+        if info.get("UIDeviceFamily") != [1]:
+            raise ConfigurationError("Exported IPA must target iPhone only (UIDeviceFamily [1]). Check target-level TARGETED_DEVICE_FAMILY.")
         prefix = info_path.removesuffix("Info.plist")
         names = set(archive.namelist())
         if prefix + "embedded.mobileprovision" not in names or prefix + "_CodeSignature/CodeResources" not in names:

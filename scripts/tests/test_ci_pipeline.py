@@ -166,9 +166,9 @@ class ArtifactTests(unittest.TestCase):
             self.assertEqual((width, height), (expected, expected))
             self.assertEqual(png[25], 2, "App icons must use opaque RGB, not an alpha channel")
 
-    def make_ipa(self, path, bundle="vn.sono.test", signed=True):
+    def make_ipa(self, path, bundle="vn.sono.test", signed=True, device_family=(1,)):
         prefix = "Payload/SoNoAI.app/"
-        info = {"CFBundleIdentifier": bundle, "CFBundleVersion": "12", "CFBundleShortVersionString": "1.0.0"}
+        info = {"CFBundleIdentifier": bundle, "CFBundleVersion": "12", "CFBundleShortVersionString": "1.0.0", "UIDeviceFamily": list(device_family)}
         with zipfile.ZipFile(path, "w") as archive:
             archive.writestr(prefix + "Info.plist", plistlib.dumps(info, fmt=plistlib.FMT_BINARY))
             if signed:
@@ -183,6 +183,8 @@ class ArtifactTests(unittest.TestCase):
             self.make_ipa(ipa, bundle="other.app.id")
             with self.assertRaises(pipeline.ConfigurationError): pipeline.verify_ipa(ipa, metadata)
             self.make_ipa(ipa, signed=False)
+            with self.assertRaises(pipeline.ConfigurationError): pipeline.verify_ipa(ipa, metadata)
+            self.make_ipa(ipa, device_family=(1, 2))
             with self.assertRaises(pipeline.ConfigurationError): pipeline.verify_ipa(ipa, metadata)
             self.make_ipa(ipa)
             with self.assertRaises(pipeline.ConfigurationError): pipeline.verify_ipa(ipa, dict(metadata, BUILD_NUMBER="13"))

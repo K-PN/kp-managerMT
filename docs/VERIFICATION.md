@@ -2,6 +2,12 @@
 
 ## Cập nhật build cloud
 
+Ngày 04/11/2026: đã tạo Bundle ID `vn.kpn.sonoai`, hồ sơ Sổ Nợ AI (Apple ID 6830292186), provisioning App Store và nhóm internal TestFlight cho chủ tài khoản. Dùng lại integration `qhs_apple` và Distribution certificate đã lưu trên Codemagic.
+
+Release [ios-testflight #1](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea2120a87b4d255fde3891), `e605653`: managed signing assets nhập thành công, preflight dừng vì chỉ nhận PEM trực tiếp. Đã bổ sung hỗ trợ secret reference `@file:`/`@env:` theo CLI, kiểm tra nội dung mà không in khóa hoặc đường dẫn.
+
+Release [ios-testflight #2](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea21bfa87b4d255fde38d1), `31d4f42`: API xác thực đúng app, 31 core + 3 app smoke + 2 UI XCTest đạt; archive và export `SoNoAI.ipa` (1,13 MB) có chữ ký Distribution thành công. Upload bị Apple từ chối với hai lỗi iPad: thiếu icon 152×152 và thiếu các hướng xoay cho multitasking. Nguyên nhân là preset iOS của XcodeGen tại target ghi đè setting iPhone ở project. Đã đặt `TARGETED_DEVICE_FAMILY: "1"` trực tiếp ở target app, bổ sung kiểm tra `UIDeviceFamily == [1]` trên IPA trước upload. Chưa có build TestFlight được Apple nhận tại checkpoint này.
+
 Build [ios-verify #1](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea101fa87b4d255fde3204), commit `55cbe31`, đã biên dịch thành công SoNoCore trên Mac và chạy 31 XCTest: 30 đạt, 1 lỗi cập nhật khách trùng tên sau khi đã xác nhận tạo riêng. Đã sửa validation cho phép giữ nguyên tên khi cập nhật thông tin khác và bổ sung kiểm tra đổi tên sang tên trùng vẫn bị chặn. Bản sửa chờ build kế tiếp. Các bước sinh project và app/UI test chưa chạy trong build đầu vì pipeline dừng khi core test lỗi. Những phần bên dưới ghi checkpoint kiểm tra Windows trước build này.
 
 Build [ios-verify #2](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea10f7a87b4d255fde325f), commit `d9c6d2e`: **31/31 core XCTest đạt**, XcodeGen tạo project thành công, iPhone 17 Pro Simulator khởi động. Compiler iOS phát hiện `greatestFiniteMagnitude` mơ hồ giữa CGFloat/Double trong `PDFReports.swift`; đã chỉ rõ kiểu CGFloat và Data ở commit `c5a07aa`. Chưa có app/UI test chạy thành công trong build này; tệp `.app` tự thu thập khi build lỗi không được coi là bản dùng thử hoàn chỉnh.
