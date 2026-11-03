@@ -1,0 +1,2 @@
+# Install in Codemagic's isolated venv, not in the iOS app or system Python.
+codemagic-cli-tools==0.70.2

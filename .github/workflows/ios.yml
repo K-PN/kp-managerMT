@@ -1,0 +1,24 @@
+name: Manual backup - Swift core and iOS
+# Codemagic is the primary pipeline. Keep this as a manual fallback.
+on: [workflow_dispatch]
+jobs:
+  verify:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+      - name: Financial core, SQLite, parsers, backup
+        run: swift test
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Pick installed iPhone simulator
+        run: |
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if "iPhone" in x["name"]))')
+          echo "SIMULATOR_ID=$DEVICE" >> "$GITHUB_ENV"
+      - name: Build and test native app
+        run: xcodebuild -project SoNoAI.xcodeproj -scheme SoNoAI -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath DerivedData CODE_SIGNING_ALLOWED=NO test
