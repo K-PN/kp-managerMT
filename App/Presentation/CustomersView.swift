@@ -38,8 +38,8 @@ struct CustomerEditorView: View {
     var body: some View {
         Form {
             Section("Thông tin khách hàng") {
-                TextField("Họ và tên", text: $customer.name).textContentType(.name).accessibilityIdentifier("customer.name")
-                TextField("Biệt danh", text: $customer.nickname)
+                TextField("Họ và tên", text: $customer.name).textContentType(.name).autocorrectionDisabled().accessibilityIdentifier("customer.name")
+                TextField("Biệt danh", text: $customer.nickname).autocorrectionDisabled()
                 TextField("Số điện thoại", text: $customer.phone).keyboardType(.phonePad)
                 TextField("Địa chỉ", text: $customer.address)
                 TextField("Ghi chú", text: $customer.note, axis: .vertical)

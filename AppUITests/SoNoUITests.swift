@@ -29,9 +29,13 @@ final class SoNoUITests: XCTestCase {
         let name = app.textFields["customer.name"]
         XCTAssertTrue(name.waitForExistence(timeout: 10))
         name.tap(); name.typeText("Khach thu nghiem")
-        app.buttons["customer.save"].tap()
+        XCTAssertEqual(name.value as? String, "Khach thu nghiem", app.debugDescription)
+        let save = app.buttons["customer.save"]
+        expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: save)
+        waitForExpectations(timeout: 10)
+        save.tap()
         let customer = app.staticTexts["Khach thu nghiem"].firstMatch
-        XCTAssertTrue(customer.waitForExistence(timeout: 10))
+        XCTAssertTrue(customer.waitForExistence(timeout: 15), app.debugDescription)
         customer.tap()
         post(amount: "500000", collection: false)
         assertReceivable(contains: "500.000")
