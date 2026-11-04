@@ -69,7 +69,7 @@ final class SoNoUITests: XCTestCase {
         XCTAssertTrue(confirmation.waitForExistence(timeout: 10))
         // A partly visible SwiftUI row can be hittable while its switch thumb
         // remains below the form viewport. Bring the entire row into view.
-        let viewport = app.windows.firstMatch.frame.insetBy(dx: 0, dy: 100)
+        let viewport = app.windows.firstMatch.frame.insetBy(dx: 0, dy: 44)
         for _ in 0..<5 {
             if confirmation.isHittable && viewport.contains(confirmation.frame) { break }
             app.swipeUp()
@@ -77,8 +77,12 @@ final class SoNoUITests: XCTestCase {
         screenshot("before-\(screenshotName)")
         XCTAssertTrue(confirmation.isHittable && viewport.contains(confirmation.frame), app.debugDescription)
         XCTAssertEqual(confirmation.value as? String, "0", "Confirmation must start off")
-        // SwiftUI exposes the labelled row as a switch; tap its control end.
-        confirmation.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        // SwiftUI exposes both the labelled row and its actual UISwitch.
+        // Target the inner control rather than a guessed point in the row.
+        let control = confirmation.switches.firstMatch
+        XCTAssertTrue(control.waitForExistence(timeout: 5), confirmation.debugDescription)
+        XCTAssertTrue(control.isHittable && viewport.contains(control.frame), control.debugDescription)
+        control.tap()
         expectation(for: NSPredicate(format: "value == %@", "1"), evaluatedWith: confirmation)
         waitForExpectations(timeout: 5)
         screenshot(screenshotName)
