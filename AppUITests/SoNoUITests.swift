@@ -57,17 +57,31 @@ final class SoNoUITests: XCTestCase {
         let done = app.buttons["transaction.done"]
         XCTAssertTrue(done.waitForExistence(timeout: 5))
         done.tap()
-        let confirmation = app.switches["transaction.confirmed"]
-        for _ in 0..<3 where !confirmation.isHittable { app.swipeUp() }
-        // SwiftUI exposes the whole labelled row as a switch; target its control end.
-        confirmation.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-        screenshot("draft-confirmation-\(amount)")
-        XCTAssertEqual(confirmation.value as? String, "1")
+        confirmTransaction(screenshotName: "draft-confirmation-\(amount)")
         let save = app.buttons["transaction.save"]
         expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: save)
         waitForExpectations(timeout: 5)
         save.tap()
         XCTAssertTrue(app.buttons["customer.newTransaction"].waitForExistence(timeout: 10))
+    }
+    private func confirmTransaction(screenshotName: String) {
+        let confirmation = app.switches["transaction.confirmed"]
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 10))
+        // A partly visible SwiftUI row can be hittable while its switch thumb
+        // remains below the form viewport. Bring the entire row into view.
+        let viewport = app.windows.firstMatch.frame.insetBy(dx: 0, dy: 100)
+        for _ in 0..<5 {
+            if confirmation.isHittable && viewport.contains(confirmation.frame) { break }
+            app.swipeUp()
+        }
+        screenshot("before-\(screenshotName)")
+        XCTAssertTrue(confirmation.isHittable && viewport.contains(confirmation.frame), app.debugDescription)
+        XCTAssertEqual(confirmation.value as? String, "0", "Confirmation must start off")
+        // SwiftUI exposes the labelled row as a switch; tap its control end.
+        confirmation.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        expectation(for: NSPredicate(format: "value == %@", "1"), evaluatedWith: confirmation)
+        waitForExpectations(timeout: 5)
+        screenshot(screenshotName)
     }
     private func assertReceivable(contains amount: String) {
         let balance = app.descendants(matching: .any).matching(identifier: "customer.receivable").firstMatch
@@ -98,11 +112,7 @@ final class SoNoUITests: XCTestCase {
         app.buttons["transaction.done"].tap()
         let paid = app.textFields["transaction.paid"]; paid.tap(); paid.typeText(XCUIKeyboardKey.delete.rawValue + "400000")
         XCTAssertEqual(paid.value as? String, "400000"); app.buttons["transaction.done"].tap()
-        let confirmed = app.switches["transaction.confirmed"]
-        for _ in 0..<3 where !confirmed.isHittable { app.swipeUp() }
-        confirmed.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-        XCTAssertEqual(confirmed.value as? String, "1")
-        screenshot("11-goods-before-confirm")
+        confirmTransaction(screenshotName: "11-goods-before-confirm")
         app.buttons["transaction.save"].tap()
         XCTAssertTrue(app.buttons["customer.newTransaction"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "customer.goodsPayable").firstMatch.waitForExistence(timeout: 10))
