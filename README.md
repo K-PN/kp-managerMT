@@ -1,8 +1,10 @@
-# Sổ Nợ AI · SoNo AI
+# Tạp Hóa Mỹ Thạnh
 
 Ứng dụng iPhone cá nhân bằng **Swift + SwiftUI**, iOS 17 trở lên. Sổ khách hàng, giao dịch, ảnh và nhật ký nằm trong SQLite trên iPhone. Không có tài khoản ứng dụng, quảng cáo, Firebase hay Supabase. Tiền dùng `Int64` nguyên đồng; lịch và hiển thị dùng `Asia/Ho_Chi_Minh`.
 
-**Trạng thái:** [build ios-testflight #4](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea267da87b4d255fde3a68), source `f342836`, thành công sau 7m14s: **36/36 XCTest** (31 core, 3 app smoke, 2 UI), archive/export IPA ký Distribution và **Apple xác nhận upload thành công**. Phiên bản **1.0.0 (10)** đang **Testing** trong nhóm **SoNo AI Internal**, tài khoản chủ sở hữu đã được mời. Bundle ID `vn.kpn.sonoai`, iPhone iOS 17+. Luồng tạo khách → ghi nợ 500.000đ → thu 200.000đ → dư 300.000đ đã đạt. Có [ảnh chạy thật](docs/screenshots/README.md). Chưa kiểm chứng trên iPhone thật. Xem [cách cài và test](docs/QUICK_TEST.md), [báo cáo kiểm tra](docs/VERIFICATION.md).
+**Bản cập nhật 1.1.0:** source `3955153` đã push; đạt 7 kiểm tra workspace và 18 kiểm thử pipeline trên Windows. Đã bổ sung quản lý nhập hàng, số tiền còn nợ nhà cung cấp, xác nhận giọng nói, bộ lọc ngày và tổng báo cáo. **Chưa chạy compiler/XCTest iOS và chưa upload bản 1.1.0**: phiên điều khiển Chrome đang lỗi. Xem [kịch bản kiểm thử bản mới](docs/QUICK_TEST.md) và [báo cáo kiểm tra](docs/VERIFICATION.md).
+
+Bản TestFlight đã kiểm chứng trước đó là **1.0.0 (10)**, source `f342836`, [release #4](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea267da87b4d255fde3a68), 36/36 XCTest đạt, đang Testing trong nhóm SoNo AI Internal. Các [ảnh hiện có](docs/screenshots/README.md) thuộc bản cũ. Bundle ID vẫn `vn.kpn.sonoai` để giữ dữ liệu khi nâng cấp. Chưa kiểm chứng trên iPhone thật.
 
 Source đã push lên GitHub. [Mở build và kịch bản test](docs/QUICK_TEST.md); kết quả cập nhật trên trang Codemagic.
 
@@ -47,14 +49,13 @@ Tệp `.xcodeproj` được sinh từ `project.yml` và không đưa vào Git. K
 
 ## Sử dụng
 
-- **Khách hàng:** tạo/sửa tên, biệt danh, điện thoại, địa chỉ, ghi chú; tìm không dấu; xác nhận khi trùng tên; gộp hồ sơ có lưu dấu vết. Không cung cấp chức năng xóa lịch sử tài chính.
-- **Giao dịch:** ghi nợ/cho vay, thu một phần/toàn bộ, tôi vay/tôi trả, nhận trả trước/cấn trừ và điều chỉnh phải thu. Khoản thu vượt nợ bị chặn; phần trả trước phải ghi riêng. Có ngày hiệu lực, hạn trả, ghi chú và ảnh chứng từ.
+- **Khách hàng:** tạo/sửa tên, biệt danh, điện thoại, địa chỉ; tìm không dấu; xác nhận khi trùng tên; gộp hồ sơ có lưu dấu vết. Có thể đề xuất thêm khách qua giọng nói và chỉ lưu khi xác nhận.
+- **Giao dịch:** ghi nợ, thu nợ, nhập hàng và trả tiền hàng. Nhập hàng có mặt hàng, tổng tiền, đã trả và phần còn nợ nhà cung cấp. Không yêu cầu hạn trả. Lịch sử và loại giao dịch cũ được giữ lại; sổ có bộ lọc từ ngày–đến ngày, bao gồm cả ngày cuối.
 - **Điều chỉnh:** ghi hoàn tác và bản thay thế trong cùng transaction. Hoàn tác có thể bị từ chối nếu làm các khoản thu còn lại vượt nợ.
-- **Tổng quan:** tính từ sổ thật, gồm phải thu/phải trả/trả trước, thu hôm nay/tháng này, nợ quá hạn sau phân bổ FIFO, khách nợ nhiều và hạn trả trong 7 ngày.
-- **Giọng nói:** nút micro luôn có trên màn hình chính. Apple Speech `vi-VN` kiểm tra khả năng xử lý tại chỗ; chỉ cho phép máy chủ Apple khi bạn bật tùy chọn cho lần đó. Có đường thu âm qua proxy riêng sau xác nhận. Văn bản vẫn sửa được khi mất mạng và được lưu bản nháp local. Không tự tạo khách hoặc ghi sổ.
+- **Tổng quan:** bốn thẻ đồng cấp: Tổng nợ, Tiền hàng tháng này, Tiền hàng tuần này, Tổng nợ tiền hàng. Tháng/tuần tính tổng giá trị hàng nhập gồm đã trả và còn nợ; tổng nợ tiền hàng chỉ tính phần chưa trả nhà cung cấp. Tuần bắt đầu thứ Hai, múi giờ Việt Nam.
+- **Giọng nói:** mở là bắt đầu Apple Speech `vi-VN`, cho phép Apple xử lý trực tuyến. iOS vẫn yêu cầu quyền micro và Speech lần đầu. Chạm micro để dừng và tự phân tích; văn bản sửa được. Kết quả tạm đối chiếu khách, nợ cũ và số dư sau giao dịch. Chỉ nút **Xác nhận** mới lưu khách mới và giao dịch trong cùng một transaction; đóng màn hình bỏ kết quả chưa xác nhận.
 - **Quét sổ:** camera nhiều trang có công cụ cắt/xoay/chỉnh phối cảnh của iOS; hoặc chọn từ Photos. Giữ dữ liệu nguồn, xử lý ảnh ngoài main thread, xoay/tăng độ rõ, thử Vision hoặc gửi riêng trang đang xem tới proxy sau đồng ý. Đối chiếu ảnh, sửa từng dòng, chọn khách, xác nhận rồi nhập nhóm atomically. Không giả định Vision đọc tốt chữ viết tay tiếng Việt.
-- **Báo cáo:** thu nợ theo ngày/tuần/tháng, CSV toàn sổ, PDF báo cáo và phiếu đối chiếu theo khách. CSV có chống công thức từ nội dung người dùng. Share Sheet chỉ do bạn mở và chọn nơi gửi.
-- **Nhắc hạn:** bật quyền trong Cài đặt, tạo thông báo local trước hạn một ngày và sau hạn một ngày; không gửi SMS/Zalo. Lịch được cập nhật khi mở sổ hoặc ghi dữ liệu, giới hạn 28 khoản với tối đa 56 thông báo.
+- **Báo cáo:** nhập hàng/đã trả/thu nợ theo kỳ; CSV và PDF có tổng tiền hàng, tổng trả tiền hàng, tổng thu nợ, nợ khách và nợ tiền hàng. CSV chống công thức từ nội dung người dùng. Share Sheet do bạn mở và chọn nơi gửi.
 - **Bảo vệ:** khóa bằng xác thực thiết bị, file protection của iOS, phiên proxy trong Keychain. Không có secret trong UserDefaults hay mã nguồn.
 
 ## Sao lưu và khôi phục

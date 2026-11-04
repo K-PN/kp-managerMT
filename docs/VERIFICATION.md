@@ -1,5 +1,11 @@
 # Kết quả kiểm tra và việc còn cần chạy
 
+## Cập nhật Tạp Hóa Mỹ Thạnh 1.1.0
+
+Ngày 04/11/2026, source `3955153`: đã triển khai tên mới, quản lý nhập hàng/đã trả/nợ nhà cung cấp, bốn thẻ tổng quan, Apple Speech tự mở với kết quả tạm và xác nhận, thêm khách bằng giọng nói, bộ lọc ngày và tổng CSV/PDF. Người dùng đã xác nhận tiền hàng tháng/tuần là tổng hàng nhập gồm đã trả và còn nợ.
+
+Trên Windows: **7/7 workspace checks**, **18/18 kiểm thử pipeline** đạt; `git diff --check` sạch và LaunchScreen XML đọc được. Chưa chạy Swift compiler, ibtool hoặc XCTest cho bản cập nhật. Bộ native hiện có 38 core + 4 app smoke + 4 UI tests, **chưa có kết quả chạy cho 46 tests này**. Kết nối Chrome có inventory nhưng thao tác trang thất bại cả sau tạo lại phiên; chưa khởi chạy build 1.1.0 hoặc đổi tên hồ sơ App Store Connect. Các kết quả cloud và ảnh sau đây là lịch sử bản 1.0.0, không xác minh giao diện mới. Kịch bản mới ở [QUICK_TEST.md](QUICK_TEST.md).
+
 ## Cập nhật build cloud
 
 **Release [ios-testflight #4](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea267da87b4d255fde3a68), `f342836`, thành công sau 7m14s.** 7 workspace checks + 18 CI tests, 31 core XCTest, 3 app smoke và 2 UI XCTest đạt. Test xác nhận đúng tên khách trước lưu; luồng ghi nợ 500.000đ → thu 200.000đ → dư 300.000đ đạt. Archive/export IPA **1.0.0 (10)** thành công; metadata, chữ ký/provisioning resources và `UIDeviceFamily == [1]` đạt. Apple trả **UPLOAD SUCCEEDED with no errors**, delivery UUID `46052f33-75b6-4a77-9b48-3a4e75f6b9b0`. Artifacts có IPA 1,13 MB, dSYM 2,13 MB, logs/xcresult 75,31 MB. Chưa đồng nhất upload thành công với Apple processing hoặc việc đã cài trên iPhone thật.

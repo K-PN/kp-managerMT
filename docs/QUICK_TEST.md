@@ -1,4 +1,21 @@
-# Kiểm thử Sổ Nợ AI
+# Kiểm thử Tạp Hóa Mỹ Thạnh
+
+## Bản cập nhật 1.1.0 — chờ build iOS
+
+Source `3955153` đã push và đạt kiểm tra Windows. Chưa có IPA/TestFlight 1.1.0; kết quả 36 XCTest và các ảnh bên dưới thuộc bản 1.0.0. Trong Codemagic, chạy thủ công branch **main**, workflow **My Thanh - Signed IPA and TestFlight upload**. Pipeline phải đạt core/app/UI tests trước khi ký và upload. Sau upload cần kiểm tra Apple processing, compliance và gán bản mới vào nhóm internal hiện có.
+
+Khi bản 1.1.0 xuất hiện trên TestFlight, chọn **Update**, giữ ứng dụng hiện tại để kiểm tra dữ liệu cũ còn nguyên. Dùng khách và chứng từ thử riêng:
+
+1. Kiểm tra tên dưới icon, màn hình mở và trong app: **Tạp Hóa Mỹ Thạnh**, mô tả **Quản lý giao dịch - hàng hóa**.
+2. Tạo khách thử, ghi nợ 500.000đ rồi thu 200.000đ: tổng nợ còn **300.000đ**, không cần hạn trả.
+3. Tạo nhà cung cấp thử, nhập “2 thùng mì”, tổng **1.000.000đ**, đã trả **400.000đ**: nợ tiền hàng **600.000đ**. Tiền hàng tháng/tuần tăng đủ **1.000.000đ** nếu ngày nhập thuộc kỳ. Trả tiếp 100.000đ: nợ tiền hàng còn **500.000đ**, giá trị hàng nhập không đổi.
+4. Bấm nút nói, cấp quyền iOS lần đầu. Nói “Thêm khách mới Chi Mai ghi nợ ba trăm nghìn”, chạm micro để phân tích. Kiểm tra tên, nợ cũ và số dư dự kiến; đóng mà không xác nhận phải không tạo khách/giao dịch. Lặp lại và bấm **Xác nhận** chỉ ghi một lần.
+5. Với nhà cung cấp đã tạo, nói “Nhập hàng của [tên nhà cung cấp], gồm hai thùng mì, tổng một triệu, đã trả bốn trăm nghìn, còn nợ sáu trăm nghìn”. Đối chiếu mặt hàng, tổng tiền, đã trả, nợ cũ và nợ sau. Sửa văn bản hoặc các ô kết quả nếu nhận dạng sai, rồi mới xác nhận.
+6. Ở Sổ giao dịch, bật lọc từ ngày–đến ngày; giao dịch cuối ngày kết thúc phải vẫn hiện. Kiểm tra riêng Nợ/Tiền hàng và từng khách.
+7. Xuất CSV/PDF: kiểm tra hàng **TỔNG CỘNG** và các tổng so với giao dịch thử; khoản đã hoàn tác không được cộng vào tổng.
+8. Đóng/mở app, thử nhập thủ công khi mất mạng và đối chiếu số dư. Kiểm tra micro trên iPhone thật; Simulator không chứng minh chất lượng Apple Speech hoặc thời điểm kết thúc câu.
+
+## Lịch sử bản 1.0.0
 
 Đã có giao diện SwiftUI và source chức năng: tổng quan, khách hàng, ghi/thu nợ, lịch sử, audit, voice/OCR có review, báo cáo, backup và cài đặt. Tình trạng chạy thực tế xem build Codemagic, không suy ra từ việc có source.
 
