@@ -24,11 +24,11 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleDisplayName: Sổ Nợ AI
-        CFBundleShortVersionString: "1.0.0"
+        CFBundleDisplayName: Tạp Hóa Mỹ Thạnh
+        CFBundleShortVersionString: "1.1.0"
         CFBundleVersion: "1"
         LSRequiresIPhoneOS: true
-        UILaunchScreen: {}
+        UILaunchStoryboardName: LaunchScreen
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSMicrophoneUsageDescription: Thu giọng nói để tạo bản nháp giao dịch khi bạn bấm micro.
         NSSpeechRecognitionUsageDescription: Chuyển lời nói tiếng Việt thành văn bản. Bạn xác nhận trước khi ghi sổ.

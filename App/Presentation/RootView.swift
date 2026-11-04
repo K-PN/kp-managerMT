@@ -6,7 +6,7 @@ struct RootView: View {
     @State private var voice = false
     var body: some View {
         Group {
-            if model.isLoading { ProgressView("Đang mở sổ…") }
+            if model.isLoading { BrandOpeningView() }
             else if model.ledger == nil {
                 ContentUnavailableView {
                     Label("Chưa mở được sổ", systemImage: "externaldrive.badge.exclamationmark")
@@ -18,8 +18,8 @@ struct RootView: View {
             } else if model.locked {
                 VStack(spacing: 24) {
                     Image(systemName: "lock.shield.fill").font(.system(size: 64)).foregroundStyle(.teal)
-                    Text("Sổ Nợ AI").font(.largeTitle.bold())
-                    Text("Sổ công nợ riêng của bạn").foregroundStyle(.secondary)
+                    Text(AppBrand.name).font(.largeTitle.bold())
+                    Text(AppBrand.subtitle).foregroundStyle(.secondary)
                     Button("Mở khóa") { Task { await model.unlock() } }.buttonStyle(.borderedProminent).controlSize(.large)
                     ErrorMessage()
                 }.padding()
@@ -32,7 +32,7 @@ struct RootView: View {
                         NavigationStack { SettingsView() }.tabItem { Label("Cài đặt", systemImage: "gearshape.fill") }
                     }
                     Button { voice = true } label: { Label("Nói để ghi sổ hoặc tra cứu", systemImage: "mic.fill").font(.headline).frame(maxWidth: .infinity).padding(13) }
-                        .buttonStyle(.borderedProminent).padding(.horizontal).padding(.vertical, 6).background(.regularMaterial)
+                        .buttonStyle(.borderedProminent).padding(.horizontal).padding(.vertical, 6).background(.regularMaterial).accessibilityIdentifier("voice.open")
                 }
                 .sheet(isPresented: $voice) { NavigationStack { VoiceInputView() } }
             }
@@ -72,6 +72,7 @@ struct TransactionRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(model.customerName(entry.customerID)).font(.headline)
                 Text(entry.kind.title).font(.caption).foregroundStyle(.secondary)
+                if let goods = entry.goodsDescription, !goods.isEmpty { Text(goods).font(.caption).lineLimit(2).foregroundStyle(.secondary) }
                 Text(VietnameseDate.display(entry.effectiveDate)).font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()

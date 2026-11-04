@@ -1,7 +1,7 @@
 # Start workflows manually from Codemagic. No credentials required for ios-verify.
 workflows:
   ios-verify:
-    name: SoNo AI - Verify iOS
+    name: My Thanh - Verify iOS
     instance_type: mac_mini_m2
     max_build_duration: 60
     environment:
@@ -34,7 +34,7 @@ workflows:
       - build/test-results/*.xml
 
   ios-testflight:
-    name: SoNo AI - Signed IPA and TestFlight upload
+    name: My Thanh - Signed IPA and TestFlight upload
     instance_type: mac_mini_m2
     max_build_duration: 90
     integrations:
@@ -48,7 +48,7 @@ workflows:
         - sono_app_store
       vars:
         BUNDLE_ID: vn.kpn.sonoai
-        MARKETING_VERSION: "1.0.0"
+        MARKETING_VERSION: "1.1.0"
         SONO_INSTALL_SIGNING_TOOLS: "1"
     scripts:
       - name: Validate Apple configuration
@@ -80,6 +80,8 @@ workflows:
       - build/test-results/*.xcresult
       - build/test-results/*.xml
       - build/release/metadata.json
+      - build/screenshots/*.png
+      - build/screenshots/manifest.json
     publishing:
       app_store_connect:
         auth: integration

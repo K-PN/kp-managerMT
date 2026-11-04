@@ -83,9 +83,9 @@ public struct VietnameseMoneyParser: Sendable {
     }
     /// Only monetary spans with a currency unit; bare item quantities are never money.
     public func spans(in text: String) -> [String] {
-        let normalized = TextKey.normalize(text)
+        let normalized = TextKey.normalize(text.replacingOccurrences(of: "₫", with: " dong "))
         let word = #"(?:\d+(?:[.,]\d+)*|khong|mot|hai|ba|bon|tu|nam|lam|sau|bay|tam|chin|tram|muoi|linh|le)"#
-        let pattern = "\\b(?:\(word)\\s+)*(?:\(word))\\s*(?:ty|trieu|nghin|ngan|k|dong|vnd)\\b(?:\\s+(?:\(word)|ty|trieu|nghin|ngan|ruoi)\\b)*"
+        let pattern = "\\b(?:\(word)\\s+)*(?:\(word))\\s*(?:ty|trieu|nghin|ngan|k|dong|vnd|d)\\b(?:\\s+(?:\(word)|ty|trieu|nghin|ngan|ruoi)\\b)*"
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
         return regex.matches(in: normalized, range: NSRange(normalized.startIndex..., in: normalized)).compactMap {
             Range($0.range, in: normalized).map { String(normalized[$0]) }

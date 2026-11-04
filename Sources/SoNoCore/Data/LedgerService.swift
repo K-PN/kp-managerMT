@@ -36,9 +36,24 @@ public actor LedgerService: CustomerRepository, DebtRepository, TransactionRepos
         }
     }
     public func post(_ entries: [DebtTransaction], attachments: [Attachment] = [], confirmed: Bool, allowDuplicate: Bool = false) throws {
+        try commit(entries, attachments: attachments, confirmed: confirmed, allowDuplicate: allowDuplicate, newCustomer: nil)
+    }
+    public func confirm(_ proposal: TransactionProposal, attachments: [Attachment] = [], confirmed: Bool) throws {
+        try commit(proposal.entries, attachments: attachments, confirmed: confirmed, allowDuplicate: false, newCustomer: proposal.newCustomer)
+    }
+    private func commit(_ entries: [DebtTransaction], attachments: [Attachment], confirmed: Bool, allowDuplicate: Bool, newCustomer: Customer?) throws {
         guard confirmed, !entries.isEmpty else { throw LedgerError.invalid("Cần xác nhận trước khi ghi sổ.") }
         try store.transaction {
             var state = try store.snapshot()
+            if var customer = newCustomer {
+                customer.name = customer.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !customer.name.isEmpty, customer.name.count <= 200, customer.mergedInto == nil,
+                      entries.allSatisfy({ $0.customerID == customer.id }) else { throw LedgerError.invalid("Khách mới không hợp lệ.") }
+                guard !state.customers.contains(where: { $0.id == customer.id || $0.mergedInto == nil && TextKey.normalize($0.name) == TextKey.normalize(customer.name) }) else { throw LedgerError.duplicateCustomer }
+                try store.save(customer)
+                try store.insert(AuditEvent(entityID: customer.id, event: "Tạo khách hàng", newValue: try JSONCoding.string(customer), source: entries[0].source))
+                state.customers.append(customer)
+            }
             guard !entries.contains(where: { $0.kind == .reversal || $0.reversalOf != nil }) else { throw LedgerError.invalid("Dùng chức năng hoàn tác để giữ lịch sử.") }
             guard attachments.allSatisfy({ !$0.data.isEmpty && $0.data.count <= 20_000_000 }) else { throw LedgerError.invalid("Mỗi ảnh phải nhỏ hơn 20 MB.") }
             let allAttachments = state.attachments + attachments
@@ -48,6 +63,9 @@ public actor LedgerService: CustomerRepository, DebtRepository, TransactionRepos
                 guard state.customers.contains(where: { $0.id == entry.customerID && $0.mergedInto == nil }) else { throw LedgerError.notFound }
                 guard entry.amount > 0, entry.note.count <= 10_000, entry.effectiveDate <= Date().addingTimeInterval(60),
                       entry.attachmentIDs.allSatisfy(ids.contains) else { throw LedgerError.invalid("Số tiền, ảnh hoặc ngày giao dịch không hợp lệ. Ngày đến hạn có thể ở tương lai.") }
+                if entry.kind == .purchase {
+                    guard let goods = entry.goodsDescription, !goods.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, goods.count <= 10_000 else { throw LedgerError.invalid("Cần tên mặt hàng hợp lệ.") }
+                }
                 if let due = entry.dueDate, due < VietnameseDate.calendar.startOfDay(for: entry.effectiveDate) { throw LedgerError.invalid("Hạn trả không được trước ngày giao dịch.") }
                 if [.adjustmentIncrease, .adjustmentDecrease].contains(entry.kind) && entry.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { throw LedgerError.invalid("Điều chỉnh cần lý do.") }
                 if state.transactions.contains(where: { $0.id == entry.id || (entry.importKey != nil && $0.importKey == entry.importKey) }) { throw LedgerError.duplicateTransaction }
@@ -81,6 +99,7 @@ public actor LedgerService: CustomerRepository, DebtRepository, TransactionRepos
                       replacement.effectiveDate <= Date(), replacement.importKey == nil,
                       replacement.attachmentIDs.allSatisfy({ id in state.attachments.contains { $0.id == id } }) else { throw LedgerError.invalid("Giao dịch thay thế không hợp lệ.") }
                 if let due = replacement.dueDate, due < VietnameseDate.calendar.startOfDay(for: replacement.effectiveDate) { throw LedgerError.invalid("Hạn trả không hợp lệ.") }
+                if replacement.kind == .purchase && (replacement.goodsDescription?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true) { throw LedgerError.invalid("Cần tên mặt hàng.") }
                 state.transactions.append(replacement)
             }
             _ = try LedgerCalculator.balance(state.entries(for: old.customerID))
@@ -122,6 +141,7 @@ public enum SnapshotValidator {
         let customerIDs = Set(state.customers.map(\.id)), attachmentIDs = Set(state.attachments.map(\.id)), audited = Set(state.audit.map(\.entityID))
         guard state.transactions.allSatisfy({ customerIDs.contains($0.customerID) && $0.attachmentIDs.allSatisfy(attachmentIDs.contains) && audited.contains($0.id) }),
               state.customers.allSatisfy({ audited.contains($0.id) }) else { throw LedgerError.corruptBackup }
+        guard state.transactions.filter({ $0.kind == .purchase }).allSatisfy({ !($0.goodsDescription?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true) }) else { throw LedgerError.corruptBackup }
         // Validate all UUIDs together, including reversals that might otherwise cross customer ledgers.
         _ = try LedgerCalculator.active(state.transactions)
         let index = try LedgerIndex(snapshot: state)

@@ -42,7 +42,6 @@ struct CustomerEditorView: View {
                 TextField("Biệt danh", text: $customer.nickname).autocorrectionDisabled()
                 TextField("Số điện thoại", text: $customer.phone).keyboardType(.phonePad)
                 TextField("Địa chỉ", text: $customer.address)
-                TextField("Ghi chú", text: $customer.note, axis: .vertical)
             }
             if hasDuplicate {
                 Section { Label("Tên này đã có trong sổ. Kiểm tra điện thoại hoặc biệt danh.", systemImage: "person.2.badge.gearshape"); Toggle("Tôi xác nhận đây là một khách khác", isOn: $allowDuplicate) }
@@ -74,14 +73,19 @@ struct CustomerDetailView: View {
                 Section("Số dư hiện tại") {
                     LabeledContent("Phải thu", value: VND.string(model.balance(for: customerID).receivable))
                         .accessibilityElement(children: .combine).accessibilityIdentifier("customer.receivable")
-                    LabeledContent("Tôi phải trả", value: VND.string(model.balance(for: customerID).payable))
-                    LabeledContent("Khách trả trước", value: VND.string(model.balance(for: customerID).prepaid))
+                    LabeledContent("Nợ tiền hàng", value: VND.string(model.balance(for: customerID).goodsPayable)).accessibilityIdentifier("customer.goodsPayable")
+                    if model.balance(for: customerID).prepaid > 0 || model.balance(for: customerID).payable > model.balance(for: customerID).goodsPayable {
+                        DisclosureGroup("Số dư từ bản cũ") {
+                            LabeledContent("Khoản phải trả khác", value: VND.string(model.balance(for: customerID).payable - model.balance(for: customerID).goodsPayable))
+                            LabeledContent("Khách trả trước", value: VND.string(model.balance(for: customerID).prepaid))
+                        }
+                    }
                 }
                 Section("Liên hệ") {
                     if !customer.nickname.isEmpty { LabeledContent("Biệt danh", value: customer.nickname) }
                     if !customer.phone.isEmpty { LabeledContent("Điện thoại", value: customer.phone) }
                     if !customer.address.isEmpty { Text(customer.address) }
-                    if !customer.note.isEmpty { Text(customer.note) }
+                    if !customer.note.isEmpty { DisclosureGroup("Thông tin thêm") { Text(customer.note) } }
                     ShareLink(item: reminderText(customer)) { Label("Chia sẻ lời nhắc công nợ", systemImage: "square.and.arrow.up") }
                     Button("Tạo phiếu xác nhận PDF") {
                         let entries = model.entries(for: customerID), balance = model.balance(for: customerID)
@@ -103,7 +107,6 @@ struct CustomerDetailView: View {
                         ForEach(model.customers.filter { $0.id != customerID }) { Text($0.name).tag(Optional($0.id)) }
                     }
                     Button("Kiểm tra và gộp") { mergeConfirm = true }.disabled(mergeTarget == nil || model.busy)
-                    Text("Giữ nguyên giao dịch gốc và nhật ký. Hồ sơ này trở thành tên liên kết của khách đích.").font(.caption).foregroundStyle(.secondary)
                 }
             }
             ErrorMessage()

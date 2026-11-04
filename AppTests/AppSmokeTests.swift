@@ -1,8 +1,19 @@
 import XCTest
 @testable import SoNoAI
 import SoNoCore
+import PDFKit
 
 final class AppSmokeTests: XCTestCase {
+    func testPDFContainsBrandAndGrandTotals() throws {
+        let customer = Customer(name: "Nhà cung cấp An")
+        var snapshot = LedgerSnapshot(); snapshot.customers = [customer]
+        let proposal = try TransactionProposal(snapshot: snapshot, customerID: customer.id, kind: .purchase, amount: 1_000_000, paidNow: 400_000, goods: "10 thùng sữa")
+        snapshot.transactions = proposal.entries
+        let url = try PDFReports.trading(snapshot: snapshot, period: .month)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let text = try XCTUnwrap(PDFDocument(url: url)?.string)
+        XCTAssertTrue(text.contains("TẠP HÓA MỸ THẠNH")); XCTAssertTrue(text.contains("TỔNG CỘNG")); XCTAssertTrue(text.contains("600.000"))
+    }
     @MainActor func testDisplayUsesVietnameseVND() {
         XCTAssertTrue(VND.string(500_000).contains("500"))
         XCTAssertTrue(VND.string(500_000).contains("₫"))

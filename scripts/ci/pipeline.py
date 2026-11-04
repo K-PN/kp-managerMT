@@ -99,7 +99,7 @@ def select_simulator(payload: dict) -> str:
 def make_spec(base: dict, metadata: dict | None, build_number: int) -> dict:
     spec = copy.deepcopy(base)
     info = spec["targets"]["SoNoAI"]["info"]["properties"]
-    info["CFBundleShortVersionString"] = metadata["MARKETING_VERSION"] if metadata else "1.0.0"
+    info["CFBundleShortVersionString"] = metadata["MARKETING_VERSION"] if metadata else info.get("CFBundleShortVersionString", "1.1.0")
     info["CFBundleVersion"] = str(build_number)
     settings = spec["targets"]["SoNoAI"].setdefault("settings", {}).setdefault("base", {})
     settings["CURRENT_PROJECT_VERSION"] = str(build_number)

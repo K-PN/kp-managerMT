@@ -9,6 +9,8 @@ public struct Balance: Equatable, Sendable {
     public var receivable: Int64 = 0
     public var payable: Int64 = 0
     public var prepaid: Int64 = 0
+    public var goodsPayable: Int64 = 0
+    public var goodsOutstanding: [OpenDebt] = []
     public var outstanding: [OpenDebt] = []
     public init() {}
 }
@@ -65,14 +67,27 @@ public enum LedgerCalculator {
                     result.outstanding[index].amount -= applied; remaining -= applied
                 }
             case .borrowing: result.payable = try CheckedMoney.add(result.payable, entry.amount)
+            case .purchase:
+                result.payable = try CheckedMoney.add(result.payable, entry.amount)
+                result.goodsPayable = try CheckedMoney.add(result.goodsPayable, entry.amount)
+                result.goodsOutstanding.append(OpenDebt(id: entry.id, amount: entry.amount, dueDate: nil))
+            case .supplierPayment:
+                guard entry.amount <= result.goodsPayable else { throw LedgerError.overpayment }
+                result.payable -= entry.amount; result.goodsPayable -= entry.amount
+                var remaining = entry.amount
+                for index in result.goodsOutstanding.indices where remaining > 0 {
+                    let applied = min(result.goodsOutstanding[index].amount, remaining)
+                    result.goodsOutstanding[index].amount -= applied; remaining -= applied
+                }
             case .repayment:
-                guard entry.amount <= result.payable else { throw LedgerError.overpayment }
+                guard entry.amount <= result.payable - result.goodsPayable else { throw LedgerError.overpayment }
                 result.payable -= entry.amount
             case .advanceReceived: result.prepaid = try CheckedMoney.add(result.prepaid, entry.amount)
             case .reversal: break
             }
         }
         result.outstanding.removeAll { $0.amount == 0 }
+        result.goodsOutstanding.removeAll { $0.amount == 0 }
         return result
     }
 }
@@ -84,12 +99,16 @@ public struct DashboardSummary: Sendable {
     public var collectedToday: Int64 = 0
     public var collectedThisMonth: Int64 = 0
     public var overdue: Int64 = 0
+    public var goodsThisMonth: Int64 = 0
+    public var goodsThisWeek: Int64 = 0
+    public var goodsPayable: Int64 = 0
     public var customerCount: Int = 0
     public var balances: [UUID: Balance] = [:]
     public init(snapshot: LedgerSnapshot, now: Date = Date()) throws {
         let calendar = VietnameseDate.calendar
         let today = calendar.startOfDay(for: now)
         let month = calendar.dateInterval(of: .month, for: now)!
+        let week = calendar.dateInterval(of: .weekOfYear, for: now)!
         let activeCustomers = snapshot.customers.filter { $0.mergedInto == nil }
         let index = try LedgerIndex(snapshot: snapshot)
         customerCount = activeCustomers.count
@@ -99,6 +118,7 @@ public struct DashboardSummary: Sendable {
             balances[customer.id] = balance
             receivable = try CheckedMoney.add(receivable, balance.receivable)
             payable = try CheckedMoney.add(payable, balance.payable)
+            goodsPayable = try CheckedMoney.add(goodsPayable, balance.goodsPayable)
             prepaid = try CheckedMoney.add(prepaid, balance.prepaid)
             overdue = try CheckedMoney.add(overdue, CheckedMoney.sum(balance.outstanding.filter {
                 guard let due = $0.dueDate else { return false }; return due < today
@@ -108,6 +128,10 @@ public struct DashboardSummary: Sendable {
                 if entry.effectiveDate >= month.start && entry.effectiveDate < month.end && entry.effectiveDate <= now {
                     collectedThisMonth = try CheckedMoney.add(collectedThisMonth, entry.amount)
                 }
+            }
+            for entry in try LedgerCalculator.active(entries) where entry.kind == .purchase && entry.effectiveDate <= now {
+                if entry.effectiveDate >= month.start && entry.effectiveDate < month.end { goodsThisMonth = try CheckedMoney.add(goodsThisMonth, entry.amount) }
+                if entry.effectiveDate >= week.start && entry.effectiveDate < week.end { goodsThisWeek = try CheckedMoney.add(goodsThisWeek, entry.amount) }
             }
         }
     }
@@ -140,7 +164,7 @@ public enum VietnameseDate {
     public static var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")!
-        calendar.locale = Locale(identifier: "vi_VN"); return calendar
+        calendar.locale = Locale(identifier: "vi_VN"); calendar.firstWeekday = 2; calendar.minimumDaysInFirstWeek = 4; return calendar
     }
     public static func display(_ date: Date) -> String {
         let formatter = DateFormatter(); formatter.calendar = calendar

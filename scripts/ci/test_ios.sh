@@ -2,10 +2,10 @@
 set -euo pipefail
 cd "${CM_BUILD_DIR:?Codemagic workspace is required}"
 mkdir -p build/logs build/test-results
-preserve_failure_screenshots() {
+preserve_screenshots() {
   local status=$?
   trap - EXIT
-  if [ "$status" -ne 0 ] && [ -d build/test-results/SoNoAppTests.xcresult ]; then
+  if [ -d build/test-results/SoNoAppTests.xcresult ]; then
     mkdir -p build/screenshots
     xcrun xcresulttool export attachments \
       --path build/test-results/SoNoAppTests.xcresult \
@@ -13,7 +13,7 @@ preserve_failure_screenshots() {
   fi
   exit "$status"
 }
-trap preserve_failure_screenshots EXIT
+trap preserve_screenshots EXIT
 # Compile first so source/SDK errors are reported without waiting for first boot.
 xcodebuild build-for-testing \
   -project SoNoAI.xcodeproj \

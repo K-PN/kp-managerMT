@@ -25,7 +25,7 @@ public struct OCRRow: Codable, Identifiable, Sendable, Equatable {
             guard let quantity, let unitPrice, quantity > 0, unitPrice > 0,
                   try CheckedMoney.multiply(quantity, unitPrice) == amount else { throw LedgerError.invalid("Số lượng × đơn giá không bằng thành tiền. Hãy sửa lại.") }
         }
-        return DebtTransaction(customerID: customerID, amount: amount, kind: kind, effectiveDate: date, note: note, source: .ocr, attachmentIDs: [attachmentID], importKey: "ocr:\(attachmentID.uuidString):\(id.uuidString)")
+        return DebtTransaction(customerID: customerID, amount: amount, kind: kind, effectiveDate: date, note: note, source: .ocr, attachmentIDs: [attachmentID], importKey: "ocr:\(attachmentID.uuidString):\(id.uuidString)", goodsDescription: kind == .purchase ? (note.isEmpty ? rawText : note) : nil)
     }
 }
 

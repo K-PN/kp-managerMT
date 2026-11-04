@@ -24,7 +24,7 @@ actor LocalReminderService: ReminderService {
                 let content = UNMutableNotificationContent()
                 content.title = offset < 0 ? "Khoản nợ sắp đến hạn" : "Khoản nợ đã quá hạn"
                 // Keep amounts and customer identities off the lock screen.
-                content.body = "Mở Sổ Nợ AI để kiểm tra và tạo lời nhắc."
+                content.body = "Mở Tạp Hóa Mỹ Thạnh để kiểm tra giao dịch."
                 content.sound = .default
                 let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .timeZone], from: fire)
                 let request = UNNotificationRequest(identifier: "sono.\(customer.id).\(debt.id).\(offset)", content: content, trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false))

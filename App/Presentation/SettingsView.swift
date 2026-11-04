@@ -7,14 +7,11 @@ struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
     @AppStorage("appearance") private var appearance = "system"
     @AppStorage("appLock") private var appLock = false
-    @AppStorage("remindersEnabled") private var reminders = false
     var body: some View {
         Form {
             Section("Cá nhân hóa") {
                 Picker("Giao diện", selection: $appearance) { Text("Theo hệ thống").tag("system"); Text("Sáng").tag("light"); Text("Tối").tag("dark") }
                 Toggle("Khóa bằng Face ID / mật mã iPhone", isOn: Binding(get: { appLock }, set: { value in Task { await setLock(value) } }))
-                Toggle("Nhắc ngày đến hạn", isOn: Binding(get: { reminders }, set: { value in Task { await setReminders(value) } }))
-                Text("Thông báo không hiển thị tên và số tiền trên màn hình khóa. Ứng dụng cập nhật lịch nhắc khi mở sổ; iOS có thể hạn chế hoặc trì hoãn thông báo.").font(.caption).foregroundStyle(.secondary)
             }
             Section("Dữ liệu của bạn") {
                 NavigationLink("Sao lưu và khôi phục") { BackupView() }
@@ -22,13 +19,13 @@ struct SettingsView: View {
                 NavigationLink("Báo cáo và xuất sổ") { ReportsView() }
             }
             Section("Giọng nói và chữ viết tay") {
-                NavigationLink("Ghép nối proxy AI tùy chọn") { AISettingsView() }
-                Text("Quản lý khách và công nợ dùng được khi không có mạng. Chỉ gửi âm thanh hoặc trang ảnh bạn chọn sau khi bạn đồng ý. Không gửi cơ sở dữ liệu.").font(.caption)
+                LabeledContent("Nhận dạng giọng nói", value: "Apple Speech")
+                Text("Apple có thể xử lý âm thanh trực tuyến khi bạn dùng micro.").font(.caption).foregroundStyle(.secondary)
+                DisclosureGroup("Quét chữ viết tay nâng cao") { NavigationLink("Kết nối dịch vụ OCR") { AISettingsView() } }
             }
-            Section("Sổ Nợ AI · 1.0") {
+            Section(AppBrand.name) {
                 LabeledContent("Tiền tệ", value: "VND · đồng nguyên")
-                LabeledContent("Múi giờ", value: "Asia/Ho_Chi_Minh")
-                Text("Sổ hiện nằm trên iPhone này. Hãy xuất bản sao lưu sang một nơi khác; mất hoặc hỏng máy có thể khiến mất dữ liệu chưa sao lưu.").font(.caption).foregroundStyle(.secondary)
+                LabeledContent("Phiên bản", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.0")
             }
             ErrorMessage()
         }.navigationTitle("Cài đặt")
@@ -39,15 +36,6 @@ struct SettingsView: View {
             let result = try await context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: enabled ? "Bật khóa sổ công nợ" : "Tắt khóa sổ công nợ")
             if result { appLock = enabled; model.locked = false }
         } catch { model.error = error.localizedDescription }
-    }
-    private func setReminders(_ enabled: Bool) async {
-        if enabled {
-            do {
-                let granted = try await model.reminders.requestAuthorization()
-                if granted { reminders = true; try await model.reminders.synchronize(snapshot: model.state) }
-                else { reminders = false; model.error = "Chưa có quyền thông báo. Bạn có thể bật trong Cài đặt iPhone." }
-            } catch { model.error = error.localizedDescription }
-        } else { reminders = false; await model.reminders.disable() }
     }
 }
 

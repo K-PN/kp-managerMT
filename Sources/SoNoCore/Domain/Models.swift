@@ -48,12 +48,15 @@ public struct Customer: Codable, Identifiable, Equatable, Sendable {
 
 public enum TransactionKind: String, Codable, CaseIterable, Sendable {
     case debt, loan, collection, borrowing, repayment, advanceReceived, advanceUsed
+    case purchase, supplierPayment
     case adjustmentIncrease, adjustmentDecrease, reversal
     public var title: String {
         switch self {
         case .debt: return "Ghi nợ"
         case .loan: return "Cho vay"
-        case .collection: return "Thu nợ / thu khoản vay"
+        case .collection: return "Thu nợ"
+        case .purchase: return "Nhập hàng"
+        case .supplierPayment: return "Trả tiền hàng"
         case .borrowing: return "Tôi vay khách"
         case .repayment: return "Tôi trả khoản vay"
         case .advanceReceived: return "Nhận trả trước"
@@ -63,7 +66,7 @@ public enum TransactionKind: String, Codable, CaseIterable, Sendable {
         case .reversal: return "Hoàn tác"
         }
     }
-    public static var editable: [Self] { allCases.filter { $0 != .reversal } }
+    public static var editable: [Self] { [.debt, .collection, .purchase, .supplierPayment] }
     public var increasesReceivable: Bool { [.debt, .loan, .adjustmentIncrease].contains(self) }
 }
 public enum EntrySource: String, Codable, Sendable { case manual, voice, ocr, restore }
@@ -84,14 +87,18 @@ public struct DebtTransaction: Codable, Identifiable, Equatable, Sendable {
     public var reversalOf: UUID?
     public var attachmentIDs: [UUID]
     public var importKey: String?
+    public var goodsDescription: String?
+    public var relatedPurchaseID: UUID?
     public init(id: UUID = UUID(), customerID: UUID, amount: Int64, kind: TransactionKind,
                 effectiveDate: Date = Date(), dueDate: Date? = nil, note: String = "",
                 source: EntrySource = .manual, reversalOf: UUID? = nil,
-                attachmentIDs: [UUID] = [], importKey: String? = nil, now: Date = Date()) {
+                attachmentIDs: [UUID] = [], importKey: String? = nil, now: Date = Date(),
+                goodsDescription: String? = nil, relatedPurchaseID: UUID? = nil) {
         self.id = id; self.customerID = customerID; self.amount = amount; self.kind = kind
         self.createdAt = now; self.updatedAt = now; self.effectiveDate = effectiveDate
         self.dueDate = dueDate; self.note = note; self.source = source; self.status = .posted
         self.reversalOf = reversalOf; self.attachmentIDs = attachmentIDs; self.importKey = importKey
+        self.goodsDescription = goodsDescription; self.relatedPurchaseID = relatedPurchaseID
     }
 }
 
