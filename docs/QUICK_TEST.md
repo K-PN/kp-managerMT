@@ -2,7 +2,7 @@
 
 ## Bản cập nhật 1.1.0 — chờ build iOS
 
-Source `3955153` đã push và đạt kiểm tra Windows. Chưa có IPA/TestFlight 1.1.0; kết quả 36 XCTest và các ảnh bên dưới thuộc bản 1.0.0. Trong Codemagic, chạy thủ công branch **main**, workflow **My Thanh - Signed IPA and TestFlight upload**. Pipeline phải đạt core/app/UI tests trước khi ký và upload. Sau upload cần kiểm tra Apple processing, compliance và gán bản mới vào nhóm internal hiện có.
+Build 1.1.0 đầu tiên đã biên dịch core và đạt 37/38 XCTest; lỗi nhầm “mới” với “mỗi” trong lệnh thêm khách đã được sửa trên branch main, chờ chạy lại. Chưa có IPA/TestFlight 1.1.0; kết quả 36 XCTest và các ảnh bên dưới thuộc bản 1.0.0. Trong Codemagic, dùng **Start new build**, chọn branch **main**, workflow **My Thanh - Signed IPA and TestFlight upload** để lấy commit mới. Pipeline phải đạt core/app/UI tests trước khi ký và upload. Sau upload cần kiểm tra Apple processing, compliance và gán bản mới vào nhóm internal hiện có.
 
 Khi bản 1.1.0 xuất hiện trên TestFlight, chọn **Update**, giữ ứng dụng hiện tại để kiểm tra dữ liệu cũ còn nguyên. Dùng khách và chứng từ thử riêng:
 

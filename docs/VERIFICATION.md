@@ -4,7 +4,11 @@
 
 Ngày 04/11/2026, source `3955153`: đã triển khai tên mới, quản lý nhập hàng/đã trả/nợ nhà cung cấp, bốn thẻ tổng quan, Apple Speech tự mở với kết quả tạm và xác nhận, thêm khách bằng giọng nói, bộ lọc ngày và tổng CSV/PDF. Người dùng đã xác nhận tiền hàng tháng/tuần là tổng hàng nhập gồm đã trả và còn nợ.
 
-Trên Windows: **7/7 workspace checks**, **18/18 kiểm thử pipeline** đạt; `git diff --check` sạch và LaunchScreen XML đọc được. Chưa chạy Swift compiler, ibtool hoặc XCTest cho bản cập nhật. Bộ native hiện có 38 core + 4 app smoke + 4 UI tests, **chưa có kết quả chạy cho 46 tests này**. Kết nối Chrome có inventory nhưng thao tác trang thất bại cả sau tạo lại phiên; chưa khởi chạy build 1.1.0 hoặc đổi tên hồ sơ App Store Connect. Các kết quả cloud và ảnh sau đây là lịch sử bản 1.0.0, không xác minh giao diện mới. Kịch bản mới ở [QUICK_TEST.md](QUICK_TEST.md).
+Trên Windows: **7/7 workspace checks**, **18/18 kiểm thử pipeline** đạt; `git diff --check` sạch và LaunchScreen XML đọc được. Kết nối Chrome có inventory nhưng thao tác trang thất bại cả sau tạo lại phiên. Chưa đổi tên hồ sơ App Store Connect. Các kết quả cloud và ảnh của bản 1.0.0 phía dưới không xác minh giao diện mới. Kịch bản mới ở [QUICK_TEST.md](QUICK_TEST.md).
+
+Người dùng đã chạy [build 6aea9e93a87b4d255fde5cd2](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aea9e93a87b4d255fde5cd2) và cung cấp log: core biên dịch thành công sau 13,02 giây, **37/38 XCTest đạt**. `TradingTests.swift:91` thất bại vì lệnh “Thêm khách mới Chị Mai ghi nợ 300 nghìn” trả `amount == nil`. Nguyên nhân: chuẩn hóa bỏ dấu biến cả “mới” và “mỗi” thành `moi`, làm nhánh tính số lượng × đơn giá xóa số tiền. Pipeline dừng ở **Test financial core**; chưa chạy ibtool, app/UI tests, ký hoặc upload.
+
+Bản sửa loại cụm khai báo “thêm/tạo khách mới” khỏi phần nhận diện đơn giá, kiểm tra từ `moi` theo ranh giới từ và vẫn tính/chặn trường hợp có “mỗi bao” theo quy tắc cũ. Bổ sung hai core tests cho lệnh có/không dấu và thêm khách kèm đơn giá đủ/thiếu số lượng. Sau sửa, 7 workspace checks + 18 pipeline tests đạt trên Windows. Bộ native hiện có **40 core + 4 app smoke + 4 UI tests**, cần chạy lại Codemagic để xác nhận; chưa coi các test mới hoặc test từng lỗi đã đạt.
 
 ## Cập nhật build cloud
 

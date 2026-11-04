@@ -27,15 +27,18 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
         }
         let parser = VietnameseMoneyParser()
         let spans = parser.spans(in: text)
+        // Accent folding makes both “mới” and “mỗi” become “moi”.
+        // Exclude the explicit new-customer phrase before checking unit prices.
+        let pricingKey = key.replacingOccurrences(of: #"\b(?:them|tao)\s+khach\s+moi\b"#, with: "", options: .regularExpression)
         var amount: Int64?
         if spans.count == 1 {
             let result = parser.parse(spans[0]); amount = result.amount
             if let warning = result.warning { warnings.append(warning) }
-            if key.contains("moi") {
+            if pricingKey.range(of: #"\bmoi\b"#, options: .regularExpression) != nil {
                 // Conservative support for explicit numeric quantities: “mua 5 bao … mỗi bao 90 nghìn”.
                 if let regex = try? NSRegularExpression(pattern: #"\bmua\s+(\d+)\s+.+\bmoi\b"#),
-                   let match = regex.firstMatch(in: key, range: NSRange(key.startIndex..., in: key)),
-                   let range = Range(match.range(at: 1), in: key), let quantity = Int64(key[range]), quantity > 0, let unit = amount {
+                   let match = regex.firstMatch(in: pricingKey, range: NSRange(pricingKey.startIndex..., in: pricingKey)),
+                   let range = Range(match.range(at: 1), in: pricingKey), let quantity = Int64(pricingKey[range]), quantity > 0, let unit = amount {
                     amount = try? CheckedMoney.multiply(unit, quantity)
                     if amount == nil { warnings.append("Thành tiền vượt giới hạn.") }
                 } else { amount = nil; warnings.append("Chưa xác định đủ số lượng và đơn giá. Hãy nhập thành tiền.") }

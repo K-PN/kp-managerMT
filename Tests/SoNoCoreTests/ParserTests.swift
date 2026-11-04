@@ -26,6 +26,24 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(draft.amount, 450_000)
         XCTAssertTrue(VietnameseDate.calendar.isDate(draft.effectiveDate, inSameDayAs: VietnameseDate.calendar.date(byAdding: .day, value: -1, to: now)!))
     }
+    func testNewCustomerKeywordDoesNotEraseDebtAmount() {
+        for text in ["Thêm khách mới Chị Mai ghi nợ 300 nghìn", "Tạo khách mới Chị Mai ghi nợ ba trăm nghìn", "Them khach moi Chi Mai ghi no 300 nghin"] {
+            let draft = VietnameseVoiceParser().parse(text, customers: [])
+            XCTAssertEqual(draft.intent, .debt, text)
+            XCTAssertEqual(draft.amount, 300_000, text)
+            XCTAssertNotNil(draft.newCustomerName, text)
+            XCTAssertFalse(draft.warnings.contains { $0.contains("đơn giá") }, text)
+        }
+    }
+    func testUnitPricingStillAppliesWhenAddingNewCustomer() {
+        let parser = VietnameseVoiceParser()
+        let draft = parser.parse("Thêm khách mới Chị Mai mua 5 bao gạo mỗi bao 90 nghìn", customers: [])
+        XCTAssertEqual(draft.newCustomerName, "Chị Mai")
+        XCTAssertEqual(draft.amount, 450_000)
+        let incomplete = parser.parse("Thêm khách mới Chị Mai mua gạo mỗi bao 90 nghìn", customers: [])
+        XCTAssertNil(incomplete.amount)
+        XCTAssertTrue(incomplete.warnings.contains { $0.contains("đơn giá") })
+    }
     func testDuplicateNameRequiresSelectionAndAccentInsensitiveNicknameMatches() {
         let a = Customer(name: "Nguyễn Văn Nam", nickname: "Bảy"), b = Customer(name: "Trần Văn Nam")
         let draft = VietnameseVoiceParser().parse("Anh Nam lấy thêm hàng 500 nghìn", customers: [a, b], now: Date())
