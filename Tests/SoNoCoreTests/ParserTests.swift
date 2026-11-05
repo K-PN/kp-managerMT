@@ -2,6 +2,43 @@ import XCTest
 @testable import SoNoCore
 
 final class ParserTests: XCTestCase {
+    func testFocusedCustomerPatternsAutomaticallyProposeNewNames() {
+        let parser = VietnameseVoiceParser()
+        for (text, kind, goods, amount) in [
+            ("Khánh nợ một thùng bia hai trăm nghìn", VoiceIntent.debt, "một thùng bia", Int64(200_000)),
+            ("Khánh trả một thùng bia hai trăm nghìn", .collection, "một thùng bia", 200_000),
+            ("Lê Thị Thanh nợ 1 lon bò húc 20.000", .debt, "1 lon bò húc", 20_000)
+        ] {
+            let draft = parser.parse(text, customers: [])
+            XCTAssertEqual(draft.intent, kind, text); XCTAssertEqual(draft.amount, amount, text)
+            XCTAssertEqual(draft.goodsDescription, goods, text)
+            XCTAssertEqual(draft.newCustomerName, text.hasPrefix("Khánh") ? "Khánh" : "Lê Thị Thanh", text)
+            XCTAssertTrue(draft.candidateIDs.isEmpty)
+        }
+        XCTAssertEqual(parser.parse("Khánh nợ hai chục triệu", customers: []).newCustomerName, "Khánh")
+    }
+    func testSupplierNameStopsBeforeSpelledOutMoneyForDebtAndPayment() {
+        for prefix in ["xe", "nhà xe", "nhà cung cấp", "công ty"] {
+            for action in ["Nợ", "Trả"] {
+                let draft = VietnameseVoiceParser().parse("\(action) \(prefix) An Phát hai chục triệu", customers: [])
+                XCTAssertEqual(draft.intent, action == "Nợ" ? .purchase : .supplierPayment)
+                XCTAssertEqual(draft.newCustomerName, "\(prefix) An Phát")
+                XCTAssertEqual(draft.amount, 20_000_000)
+            }
+        }
+    }
+    func testPersonMatchingIgnoresGoodsNamesAndDoesNotReplaceDifferentFullNames() {
+        let khanh = Customer(name: "Khánh"), thanh = Customer(name: "Thanh"), other = Customer(name: "Hoàng Khánh")
+        let parser = VietnameseVoiceParser()
+        let existing = parser.parse("Khánh nợ một chai nước Thanh 20 nghìn", customers: [khanh, thanh])
+        XCTAssertEqual(existing.candidateIDs, [khanh.id]); XCTAssertNil(existing.newCustomerName)
+        let fresh = parser.parse("Minh Khánh nợ 20 nghìn", customers: [other])
+        XCTAssertTrue(fresh.candidateIDs.isEmpty); XCTAssertEqual(fresh.newCustomerName, "Minh Khánh")
+        XCTAssertNil(parser.parse("Nợ 20 nghìn", customers: []).newCustomerName)
+        XCTAssertNil(parser.parse("Tra cứu nợ Khánh", customers: []).newCustomerName)
+        let duplicate = Customer(name: "Khánh")
+        XCTAssertEqual(Set(parser.parse("Khánh nợ 20 nghìn", customers: [khanh, duplicate]).candidateIDs), Set([khanh.id, duplicate.id]))
+    }
     func testDozensAndMillionMoneyVariants() {
         let cases: [(String, Int64)] = [("chục triệu", 10_000_000), ("một chục triệu", 10_000_000), ("hai chục triệu", 20_000_000), ("2 chục triệu", 20_000_000), ("mười lăm triệu", 15_000_000), ("một triệu hai trăm", 1_200_000), ("1,5 triệu", 1_500_000), ("1.5 triệu", 1_500_000), ("hai triệu rưỡi", 2_500_000)]
         for (text, expected) in cases {

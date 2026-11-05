@@ -29,7 +29,11 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
         }
         let book: AccountBook = [.purchase, .supplierPayment, .supplierBalance].contains(intent) ? .goods : .debt
         let available = customers.filter { AccountBook.inferred(for: $0) == book }
-        let candidates = supplierName.map { CustomerMatcher.matchSupplier($0, customers: available) } ?? CustomerMatcher.match(text, customers: available)
+        let spokenName = newName(in: text) ?? personName(in: text)
+        let candidates: [Customer]
+        if let supplierName { candidates = CustomerMatcher.matchSupplier(supplierName, customers: available) }
+        else if let spokenName { candidates = CustomerMatcher.matchPerson(spokenName, customers: available) }
+        else { candidates = CustomerMatcher.match(text, customers: available) }
         if ![.todayCollections, .overdue, .createCustomer].contains(intent) && candidates.count != 1 {
             warnings.append(candidates.isEmpty ? "Chưa tìm thấy khách. Hãy chọn khách hàng." : "Có nhiều khách phù hợp. Hãy chọn đúng người.")
         }
@@ -80,21 +84,39 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
         if intent == .unknown { warnings.append("Chưa rõ yêu cầu. Hãy chọn loại giao dịch thủ công.") }
         var result = VoiceDraft(transcript: text, intent: intent, candidateIDs: candidates.map(\.id), amount: amount, effectiveDate: date, warnings: warnings)
         result.paidNow = paidNow
-        if intent == .debt || intent == .purchase {
+        if [.debt, .collection, .purchase].contains(intent) {
             let names = candidates.count == 1 ? [candidates[0].name, candidates[0].nickname] : []
-            result.goodsDescription = goods(in: text, customerNames: names, debt: intent == .debt)
+            result.goodsDescription = goods(in: text, customerNames: names, debt: intent != .purchase)
             if intent == .purchase && result.goodsDescription == nil { result.goodsDescription = "Tiền hàng" }
         }
         if key.contains("them khach") || key.contains("tao khach") || key.contains("them xe") || key.contains("them nha cung cap") { result.newCustomerName = newName(in: text) }
-        if let supplierName, candidates.isEmpty, intent == .purchase {
-            result.newCustomerName = supplierName
+        if candidates.isEmpty, [.debt, .collection, .purchase, .supplierPayment, .createCustomer].contains(intent),
+           let name = supplierName ?? spokenName {
+            result.newCustomerName = name
             result.warnings.removeAll { $0 == "Chưa tìm thấy khách. Hãy chọn khách hàng." }
         }
+        if !candidates.isEmpty { result.newCustomerName = nil }
         return result
     }
     private func supplierName(in text: String) -> String? {
-        capture(text, pattern: #"\b((?:nhà\s+xe|nha\s+xe|nhà\s+cung\s+cấp|nha\s+cung\s+cap|công\s+ty|cong\s+ty|xe)\s+[^\d\s,.;:!?][^,.;:!?]*?)(?=\s+(?:ghi\s+nợ|ghi\s+no|còn\s+nợ|con\s+no|nợ|no|trả|tra|đã\s+trả|da\s+tra|thanh\s+toán|thanh\s+toan|nhập\s+hàng|nhap\s+hang|mua|lấy|lay|gồm|gom|hàng\s+gồm|hang\s+gom|tổng|tong|thành\s+tiền|thanh\s+tien|số\s+điện\s+thoại|so\s+dien\s+thoai|hôm|hom|\d+(?:[.,]\d+)*)\b|[,.;:!?]|$)"#)
+        guard let captured = capture(text, pattern: #"\b((?:nhà\s+xe|nha\s+xe|nhà\s+cung\s+cấp|nha\s+cung\s+cap|công\s+ty|cong\s+ty|xe)\s+[^\d\s,.;:!?][^,.;:!?]*?)(?=\s+(?:ghi\s+nợ|ghi\s+no|còn\s+nợ|con\s+no|nợ|no|trả|tra|đã\s+trả|da\s+tra|thanh\s+toán|thanh\s+toan|nhập\s+hàng|nhap\s+hang|mua|lấy|lay|gồm|gom|hàng\s+gồm|hang\s+gom|tổng|tong|thành\s+tiền|thanh\s+tien|số\s+điện\s+thoại|so\s+dien\s+thoai|hôm|hom|\d+(?:[.,]\d+)*)\b|[,.;:!?]|$)"#) else { return nil }
+        if let mention = VietnameseMoneyParser().mentions(in: captured, allowBareVND: true).first,
+           let range = Range(mention.range, in: captured) {
+            let name = captured[..<range.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
+            return name.split(separator: " ").count >= 2 ? name : nil
+        }
+        return captured
     }
+    private func personName(in input: String) -> String? {
+        let text = input.precomposedStringWithCanonicalMapping
+        guard let name = capture(text, pattern: #"^(.+?)\s+(?:vừa\s+|vua\s+)?(?:ghi\s+nợ|ghi\s+no|nợ|no|trả|tra|thanh\s+toán|thanh\s+toan)\b"#),
+              name.count <= 100, name.split(separator: " ").count <= 8,
+              name.rangeOfCharacter(from: .decimalDigits) == nil,
+              !AccountBook.hasSupplierCue(name),
+              !["ghi", "thu", "tra cuu", "xem", "hom nay", "hom qua"].contains(TextKey.normalize(name)) else { return nil }
+        return name.trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: ",.;:!?")))
+    }
+
     private func newName(in text: String) -> String? {
         if let name = capture(text, pattern: #"(?:thêm|them|tạo|tao)\s+((?:xe|nhà\s+cung\s+cấp|nha\s+cung\s+cap|công\s+ty|cong\s+ty)\s+.+?)(?=\s+(?:ghi\s+nợ|ghi\s+no|nợ|no|nhập\s+hàng|nhap\s+hang|trả|tra|mua)|[,.;]|$)"#) { return name }
         // Fold only for matching, retaining accents in the captured display name.
@@ -104,7 +126,7 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
     private func goods(in input: String, customerNames: [String], debt: Bool) -> String? {
         let text = input.precomposedStringWithCanonicalMapping
         let explicit = capture(text, pattern: #"(?:mặt\s+hàng|hàng\s+gồm|gồm|mat\s+hang|hang\s+gom|gom)\s+(.+)$"#)
-        let debtClause = debt ? capture(text, pattern: #"(?:ghi\s+nợ|ghi\s+no|nợ|no|mua|lấy\s+thêm|lay\s+them)\s+(.+)$"#) : nil
+        let debtClause = debt ? capture(text, pattern: #"(?:ghi\s+nợ|ghi\s+no|nợ|no|trả|tra|thanh\s+toán|thanh\s+toan|mua|lấy\s+thêm|lay\s+them)\s+(.+)$"#) : nil
         guard var clause = explicit ?? debtClause else { return nil }
         for name in customerNames.filter({ !$0.isEmpty }).sorted(by: { $0.count > $1.count }) {
             if let range = clause.range(of: name, options: [.anchored, .caseInsensitive, .diacriticInsensitive]),
@@ -130,6 +152,18 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
     }
 }
 public enum CustomerMatcher {
+    public static func matchPerson(_ name: String, customers: [Customer]) -> [Customer] {
+        func key(_ value: String) -> String {
+            TextKey.normalize(value).replacingOccurrences(of: #"^(?:anh|chi|co|chu|bac|ong|ba|em)\s+"#, with: "", options: .regularExpression)
+        }
+        let target = key(name)
+        let exact = customers.filter { customer in
+            customer.mergedInto == nil && [customer.name, customer.nickname].contains { !key($0).isEmpty && key($0) == target }
+        }
+        if !exact.isEmpty { return exact }
+        // A spoken full name must not silently select someone sharing its last word.
+        return target.split(separator: " ").count == 1 ? match(name, customers: customers) : []
+    }
     public static func matchSupplier(_ name: String, customers: [Customer]) -> [Customer] {
         let exact = customers.filter { customer in
             customer.mergedInto == nil && [customer.name, customer.nickname].contains { TextKey.normalize($0) == TextKey.normalize(name) }

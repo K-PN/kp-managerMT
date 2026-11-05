@@ -9,6 +9,7 @@ struct SoNoAIApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .dynamicTypeSize(...DynamicTypeSize.xLarge)
                 .environmentObject(model)
                 .environment(\.locale, Locale(identifier: "vi_VN"))
                 .environment(\.calendar, VietnameseDate.calendar)

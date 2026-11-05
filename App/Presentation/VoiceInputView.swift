@@ -13,6 +13,8 @@ struct VoiceInputView: View {
     @State private var selectedCustomerID: UUID?
     @State private var creatingNew = false
     @State private var newName = ""
+    @State private var pendingCustomerID = UUID()
+    @State private var editingDetails = false
     @State private var amount = ""
     @State private var paid = "0"
     @State private var goods = ""
@@ -30,7 +32,13 @@ struct VoiceInputView: View {
     private var currentReview: Bool { draft != nil && reviewText == text && !speech.recording && !processing }
     private var query: Bool { [.balance, .supplierBalance, .todayCollections, .overdue].contains(intent) }
     private var book: AccountBook { [.purchase, .supplierPayment, .supplierBalance].contains(intent) ? .goods : .debt }
-    private var pendingCustomer: Customer? { creatingNew ? Customer(name: newName, book: book) : nil }
+    private var pendingCustomer: Customer? { creatingNew ? Customer(id: pendingCustomerID, name: newName, book: book) : nil }
+    private var customerChoice: Binding<UUID?> {
+        Binding(get: { creatingNew ? pendingCustomerID : selectedCustomerID }, set: { value in
+            creatingNew = value == pendingCustomerID
+            selectedCustomerID = creatingNew ? nil : value
+        })
+    }
     private var actionKind: TransactionKind? {
         switch intent {
         case .debt: return .debt
@@ -48,13 +56,14 @@ struct VoiceInputView: View {
     }
     var body: some View {
         Form {
-            microphone
+            if !currentReview && !completed { microphone }
             Section("Văn bản vừa nói") {
                 TextEditor(text: $text).frame(minHeight: 95).accessibilityLabel("Nội dung lời nói").accessibilityIdentifier("voice.transcript")
                     .focused($editingTranscript).autocorrectionDisabled()
                     .disabled(speech.recording || processing || starting || saving)
                 if !speech.recording && !processing && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Button(currentReview ? "Phân tích lại" : "Xem kết quả") { analyze() }.accessibilityIdentifier("voice.analyze")
+                    if currentReview { Button("Nói lại") { Task { await startSpeaking() } }.accessibilityIdentifier("voice.mic") }
                 }
             }
             if currentReview && !completed {
@@ -68,7 +77,6 @@ struct VoiceInputView: View {
                 } else if query {
                     Section("Kết quả tra cứu") { Text(answer ?? "Chọn khách để tra cứu.").textSelection(.enabled) }
                 } else {
-                    transactionFields
                     comparison
                 }
             }
@@ -123,6 +131,7 @@ struct VoiceInputView: View {
         Section("Kết quả tạm thời") {
             if ![.createCustomer, .todayCollections, .overdue].contains(intent) {
             Picker("Thao tác", selection: $intent) {
+                if intent == .unknown { Text("Chọn thao tác").tag(VoiceIntent.unknown) }
                 Text("Ghi nợ").tag(VoiceIntent.debt)
                 Text("Thu nợ").tag(VoiceIntent.collection)
                 Text("Nợ tiền hàng").tag(VoiceIntent.purchase)
@@ -132,14 +141,13 @@ struct VoiceInputView: View {
             }.accessibilityIdentifier("voice.intent")
             }
             if intent != .todayCollections && intent != .overdue {
-                if !query { Toggle(book == .goods ? "Thêm xe / nhà cung cấp mới" : "Thêm khách mới", isOn: $creatingNew).disabled(intent == .createCustomer) }
+                Picker(book == .goods ? "Xe / nhà cung cấp" : "Khách nợ", selection: customerChoice) {
+                    Text("Chọn đúng người").tag(nil as UUID?)
+                    if !query && !newName.isEmpty { Text(newName + " · mới").tag(Optional(pendingCustomerID)) }
+                    ForEach(model.customers(in: book)) { customer in Text(customer.name).tag(Optional(customer.id)) }
+                }.accessibilityIdentifier("voice.customer")
                 if creatingNew {
                     TextField("Tên khách mới", text: $newName).autocorrectionDisabled().accessibilityIdentifier("voice.newName")
-                } else {
-                    Picker(book == .goods ? "Xe / nhà cung cấp" : "Khách nợ", selection: $selectedCustomerID) {
-                        Text("Chọn đúng người").tag(nil as UUID?)
-                        ForEach(model.customers(in: book)) { customer in Text(customer.name + (customer.phone.isEmpty ? "" : " · " + customer.phone)).tag(Optional(customer.id)) }
-                    }.accessibilityIdentifier("voice.customer")
                 }
             }
             if let draft {
@@ -148,31 +156,32 @@ struct VoiceInputView: View {
         }
     }
     private var transactionFields: some View {
-        Section("Giao dịch đề xuất") {
-            if intent == .purchase || intent == .debt { TextField(intent == .debt ? "Hàng khách nợ / số lượng" : "Mặt hàng / số lượng", text: $goods, axis: .vertical).accessibilityIdentifier("voice.goods") }
+        DisclosureGroup("Sửa chi tiết", isExpanded: $editingDetails) {
+            if [.purchase, .debt, .collection].contains(intent) { TextField(intent == .purchase ? "Mặt hàng / số lượng" : "Hàng khách nợ / số lượng", text: $goods, axis: .vertical).accessibilityIdentifier("voice.goods") }
             TextField(intent == .purchase ? "Tổng tiền hàng (đồng)" : intent == .debt ? "Số tiền nợ (đồng)" : "Số tiền (đồng)", text: $amount).keyboardType(.numberPad).focused($editingMoney, equals: .amount).accessibilityIdentifier("voice.amount")
             if let value = VietnameseMoneyParser().parse(amount).amount { Text(VND.string(value)).font(.title2.bold()).foregroundStyle(.teal).accessibilityIdentifier("voice.amountVND") }
             if intent == .purchase { TextField("Đã trả (đồng)", text: $paid).keyboardType(.numberPad).focused($editingMoney, equals: .paid).accessibilityIdentifier("voice.paid") }
             DatePicker("Ngày giao dịch", selection: $date, in: ...Date(), displayedComponents: [.date, .hourAndMinute])
-        }
+        }.accessibilityIdentifier("voice.editDetails")
     }
     private var comparison: some View {
         Section("Đối chiếu trước khi xác nhận") {
-            if creatingNew { LabeledContent("Khách mới", value: newName) }
-            else if let id = selectedCustomerID { LabeledContent("Đúng người giao dịch", value: model.customerName(id)) }
             if let proposal {
-                if !goods.isEmpty { LabeledContent("Hàng", value: goods) }
+                if let entry = proposal.entries.first {
+                    VoiceAmountSummary(action: entry.kind.title, goods: goods, amount: entry.amount)
+                        .accessibilityIdentifier("voice.summary")
+                }
                 if book == .debt {
                     LabeledContent("Nợ khách cũ", value: VND.string(proposal.before.receivable)).accessibilityIdentifier("voice.oldDebt")
                 } else { LabeledContent("Nợ tiền hàng cũ", value: VND.string(proposal.before.goodsPayable)) }
-                if let entry = proposal.entries.first { LabeledContent(entry.kind.title, value: VND.string(entry.amount)) }
-                if intent == .purchase, let paidAmount { LabeledContent("Đã trả lần này", value: VND.string(paidAmount)) }
+                if intent == .purchase, let paidAmount, paidAmount > 0 { LabeledContent("Đã trả lần này", value: VND.string(paidAmount)) }
                 if book == .debt {
                     LabeledContent("Nợ khách sau ghi", value: VND.string(proposal.after.receivable)).accessibilityIdentifier("voice.newDebt")
                 } else { LabeledContent("Nợ tiền hàng sau ghi", value: VND.string(proposal.after.goodsPayable)).accessibilityIdentifier("voice.newGoodsDebt") }
             } else {
                 Text(validationMessage).font(.caption).foregroundStyle(.red)
             }
+            transactionFields
             confirmButton
         }
     }
@@ -211,7 +220,9 @@ struct VoiceInputView: View {
         editingMoney = nil; editingTranscript = false
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { model.error = "Chưa nghe rõ. Bạn có thể nói lại hoặc nhập văn bản."; return }
         let parsed = VietnameseVoiceParser().parse(text, customers: model.voiceCustomers, now: Date())
-        draft = parsed; reviewText = text; intent = parsed.intent == .unknown ? .debt : parsed.intent; date = parsed.effectiveDate; completed = false
+        draft = parsed; reviewText = text; intent = parsed.intent; date = parsed.effectiveDate; completed = false
+        pendingCustomerID = UUID()
+        editingDetails = parsed.amount == nil || parsed.warnings.contains { $0.contains("ngày") }
         selectedCustomerID = parsed.candidateIDs.count == 1 ? parsed.candidateIDs.first : nil
         creatingNew = parsed.newCustomerName != nil || intent == .createCustomer
         newName = parsed.newCustomerName ?? ""; amount = parsed.amount.map(String.init) ?? ""
@@ -238,6 +249,29 @@ struct VoiceInputView: View {
             }
             if success { completed = true; draft = nil; speech.cancel() }
         } catch { model.error = error.localizedDescription }
+    }
+}
+
+private struct VoiceAmountSummary: View {
+    let action: String
+    let goods: String
+    let amount: Int64
+    private var item: String { goods.isEmpty ? action : goods }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if !goods.isEmpty { Text(action).font(.caption).foregroundStyle(.secondary) }
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(item).fixedSize()
+                    Spacer(minLength: 12)
+                    Text(VND.string(amount)).bold().monospacedDigit().fixedSize()
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(item).fixedSize(horizontal: false, vertical: true)
+                    Text(VND.string(amount)).bold().monospacedDigit().fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }.accessibilityElement(children: .combine)
     }
 }
 

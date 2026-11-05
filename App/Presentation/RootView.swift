@@ -31,7 +31,7 @@ struct RootView: View {
                         NavigationStack { LedgerView() }.tabItem { Label("Sổ giao dịch", systemImage: "book.closed.fill") }
                         NavigationStack { SettingsView() }.tabItem { Label("Cài đặt", systemImage: "gearshape.fill") }
                     }
-                    Button { voice = true } label: { Label("Nói để ghi sổ hoặc tra cứu", systemImage: "mic.fill").font(.headline).frame(maxWidth: .infinity).padding(13) }
+                    Button { voice = true } label: { Label("Nói để ghi sổ hoặc tra cứu", systemImage: "mic.fill").font(.headline).lineLimit(2).multilineTextAlignment(.center).frame(maxWidth: .infinity).padding(13) }
                         .buttonStyle(.borderedProminent).padding(.horizontal).padding(.vertical, 6).background(.regularMaterial).accessibilityIdentifier("voice.open")
                 }
                 .sheet(isPresented: $voice) { NavigationStack { VoiceInputView() } }
@@ -76,7 +76,7 @@ struct TransactionRow: View {
                 Text(VietnameseDate.display(entry.effectiveDate)).font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
-            Text(VND.string(entry.amount)).font(.subheadline.bold()).monospacedDigit()
+            Text(VND.string(entry.amount)).font(.subheadline.bold()).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7).layoutPriority(1)
         }.padding(.vertical, 5).accessibilityElement(children: .combine)
     }
 }
