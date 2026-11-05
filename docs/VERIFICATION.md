@@ -20,7 +20,9 @@ Build [ios-testflight #8](https://codemagic.io/app/6aea10057cef5b806068b14c/buil
 
 **Build [ios-testflight #9](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aebd854004ce28f20edfb86), `3f100ac`, thành công ngày 05/11/2026 sau 9m50s:** 40 core + 4 app smoke + 4 UI tests đạt, tổng **48/48 XCTest**. Luồng nợ 500.000đ → thu 200.000đ → dư 300.000đ, nhập hàng 1.000.000đ/đã trả 400.000đ, mở bộ lọc ngày/báo cáo tổng và thêm khách qua văn bản giọng nói với preview không ghi dữ liệu đều đạt. Đã xuất 17 screenshot attachments trong xcresult. Không kiểm chứng nhận dạng âm thanh trên iPhone thật. Lỗi AX khởi động của #8 không lặp lại khi chạy lại cùng mã.
 
-Archive/export **Tạp Hóa Mỹ Thạnh 1.1.0 (15)** thành công, IPA 1,24 MB; kiểm tra metadata, provisioning và signature resources đạt. Apple trả **UPLOAD SUCCEEDED with no errors**, delivery UUID `ff48dbb7-7864-40c7-9c6e-774a1857376c`. Chưa xác nhận Apple processing/compliance hoặc build mới Testing: phiên App Store Connect chuyển về trang đăng nhập `authResult=FAILED`. Không đồng nhất upload thành công với việc đã phân phối cho tester.
+Archive/export **Tạp Hóa Mỹ Thạnh 1.1.0 (15)** thành công, IPA 1,24 MB; kiểm tra metadata, provisioning và signature resources đạt. Apple trả **UPLOAD SUCCEEDED with no errors**, delivery UUID `ff48dbb7-7864-40c7-9c6e-774a1857376c`. Phiên App Store Connect hết đăng nhập; người dùng đã đăng nhập lại trên tab mới.
+
+**TestFlight 1.1.0 (15) đã sẵn sàng ngày 05/11/2026:** Apple processing hoàn tất, khai báo chỉ sử dụng mã hóa hệ điều hành đã lưu và hết Missing Compliance. Gán bản 15 vào nhóm **SoNo AI Internal** hiện có; trang Builds của nhóm xác nhận **1 Tester ∙ 2 Builds**, bản **1.1.0 (15)** đang **Testing**. Tester đã cài bản cũ 1.0.0 (10), có thể cập nhật qua TestFlight. Ảnh bằng chứng `build/evidence/my-thanh-testflight-15-testing.png` lưu cục bộ (ignored). Chưa cài hoặc thử micro bản mới trên iPhone thay người dùng.
 
 ## Cập nhật build cloud
 

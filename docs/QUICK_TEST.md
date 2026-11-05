@@ -1,10 +1,10 @@
 # Kiểm thử Tạp Hóa Mỹ Thạnh
 
-## Bản cập nhật 1.1.0 (15) — đã upload Apple
+## Bản cập nhật 1.1.0 (15) — sẵn sàng trên TestFlight
 
-[Build #9](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aebd854004ce28f20edfb86), commit `3f100ac`, thành công sau 9m50s: **48/48 XCTest đạt** (40 core + 4 app smoke + 4 UI), đã ký IPA **1.1.0 (15)** và Apple xác nhận upload thành công. Lỗi khởi động XCTest Runner của build #8 không lặp lại. Chưa xác nhận Apple processing/compliance và gán bản mới vào nhóm internal vì phiên App Store Connect chuyển về đăng nhập. Kết quả 36 XCTest và các ảnh bên dưới thuộc bản 1.0.0.
+[Build #9](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aebd854004ce28f20edfb86), commit `3f100ac`, thành công sau 9m50s: **48/48 XCTest đạt** (40 core + 4 app smoke + 4 UI), đã ký IPA **1.1.0 (15)** và Apple xác nhận upload thành công. Lỗi khởi động XCTest Runner của build #8 không lặp lại. Ngày 05/11/2026, Apple processing và khai báo mã hóa hoàn tất; nhóm **SoNo AI Internal** hiển thị bản **1.1.0 (15)** đang **Testing**, cùng tester hiện có. Kết quả 36 XCTest và các ảnh bên dưới thuộc bản 1.0.0.
 
-Khi bản 1.1.0 xuất hiện trên TestFlight, chọn **Update**, giữ ứng dụng hiện tại để kiểm tra dữ liệu cũ còn nguyên. Dùng khách và chứng từ thử riêng:
+Mở TestFlight trên iPhone → **Tạp Hóa Mỹ Thạnh → Update**, kiểm tra phiên bản **1.1.0 (15)**. Giữ ứng dụng hiện tại để kiểm tra dữ liệu cũ còn nguyên. Dùng khách và chứng từ thử riêng:
 
 1. Kiểm tra tên dưới icon, màn hình mở và trong app: **Tạp Hóa Mỹ Thạnh**, mô tả **Quản lý giao dịch - hàng hóa**.
 2. Tạo khách thử, ghi nợ 500.000đ rồi thu 200.000đ: tổng nợ còn **300.000đ**, không cần hạn trả.
