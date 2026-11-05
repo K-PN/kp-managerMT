@@ -1,5 +1,17 @@
 # Kết quả kiểm tra và việc còn cần chạy
 
+## Hàng khách nợ và tiền sau tên hàng 1.3.0
+
+Source `91efe9f`, ngày 05/11/2026. Ô tiền phân tích văn bản từ `bestTranscription.formattedString`; bản trước yêu cầu số không đơn vị đứng sát nhãn nợ/tổng nên bỏ sót giá sau mặt hàng. Mở rộng nhận giá nhóm hàng nghìn hoặc số nguyên lớn ở cuối cụm trong lệnh tài chính, vẫn loại số lượng hàng/ngày/điện thoại và giữ nhiều giá thành mơ hồ. Thêm “chục” trong số tiếng Việt, dấu chấm thập phân có đơn vị, và vị trí span trong văn bản gốc để tách đúng mặt hàng, giữ dấu tiếng Việt/Unicode.
+
+`goodsDescription` dùng cho cả nợ khách lẫn nhập hàng. Nhập tay/giọng nói có trường hàng khách nợ; chi tiết, tra cứu, các hàng giao dịch, CSV/PDF giữ tên hàng. Tiền còn nợ của mặt hàng dùng FIFO sau thu một phần; dữ liệu cũ thiếu mặt hàng vẫn đọc được. Không tự ghi trước Xác nhận.
+
+Windows 7/7 kiểm tra workspace và 18/18 pipeline tests đạt. Thêm sáu core parser tests, một test SQLite lưu/mở lại/thu một phần/CSV, một app test PDF và một UI test theo đúng “Khánh nợ 1 lon bò húc 20.000”. Build #19 đã đạt **72/72 XCTest**: 60 core + 6 app + 6 UI. Kiểm thử UI dùng chính văn bản “Khánh nợ 1 lon bò húc 20.000”, tự điền hàng/tiền, xác nhận rồi tra cứu lại đúng hàng và 20.000đ. PDF có mặt hàng và số nợ; luồng ghi nợ/thu một phần, nhập hàng/bộ lọc/báo cáo và các luồng giọng nói cũ đều đạt. Chưa kiểm chứng thu âm trên iPhone thay người dùng.
+
+Build #17 (`9fa3cbc`) dừng ở hai assertion của cùng câu “chục triệu”; đã sửa xử lý từ “chục” đứng một mình trước đơn vị ở `46cd1b8`. Build #18: 60/60 core và 6/6 app đạt; UI mới nhận hàng + 20.000đ, xác nhận và tra cứu lại đạt. UI ghi nợ cũ hết thời gian đọc số dư khi accessibility snapshot chậm; đã hủy lượt này trước ký/upload. `91efe9f` dùng một predicate đọc label/value cùng snapshot, chờ tối đa 30 giây và giữ assertion đúng số tiền kèm ảnh/chẩn đoán khi lỗi. Lượt #19 đã chạy lại toàn bộ và đạt.
+
+[Build #19](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec2fec004ce28f20ee0fc1), source `91efe9f`: thành công sau 11m37s, **72/72 XCTest đạt**, ký/xuất IPA **1.3.0 (25)** 1,29 MB, metadata/provisioning/signature resources đạt. Apple trả **UPLOAD SUCCEEDED with no errors**, delivery UUID `488a03b8-2518-4e72-bf36-59d1e8867912`. **Đã xác minh TestFlight ngày 05/11/2026:** Apple processing và khai báo mã hóa hoàn tất, đã gán vào **SoNo AI Internal**. Trang nhóm xác nhận **1 Tester ∙ 5 Builds**, **1.3.0 (25)** đang **Testing**. Tester đã cài 1.2.1 (22), có thể cập nhật. Ảnh bằng chứng cục bộ `build/evidence/my-thanh-testflight-25-testing.png` (ignored).
+
 ## Sửa văn bản Apple Speech và tên nhà cung cấp 1.2.1
 
 Source `5feedbe`, ngày 05/11/2026. Người dùng báo Apple Speech trả “nợ 50.000” khi nói “nợ 50 nghìn”; parser cũ chỉ lấy span có đơn vị nên bỏ sót. Thêm nhận số VNĐ không có hậu tố trong ngữ cảnh nợ/trả/tổng/thành tiền, không đổi quy tắc span OCR. Phần tổng và đã trả hỗ trợ cùng kiểu số; loại số lượng hàng, ngày, số âm và số điện thoại không nằm trong ngữ cảnh tiền. Lệnh “Thu nợ” ưu tiên collection trước từ “nợ”.

@@ -1,5 +1,15 @@
 # Kiểm thử Tạp Hóa Mỹ Thạnh
 
+## Bản 1.3.0 (25) — sẵn sàng trên TestFlight
+
+Source `91efe9f`: bộ tách tiền dùng văn bản Apple Speech, hỗ trợ giá đứng sau tên hàng và “chục triệu”; mặt hàng được lưu riêng cho nợ khách, hiện trong chi tiết, tra cứu, CSV/PDF. **72/72 XCTest đạt** (60 core + 6 app + 6 UI); [build #19](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec2fec004ce28f20ee0fc1) ký/upload thành công. Apple processing và khai báo mã hóa hoàn tất, đã gán **SoNo AI Internal**; bản **1.3.0 (25)** đang **Testing** ngày 05/11/2026. Mở **TestFlight → Tạp Hóa Mỹ Thạnh → Update**; giữ app hiện tại để giữ dữ liệu. UI đã kiểm chứng bằng văn bản, chưa thu âm trên iPhone thay người dùng.
+
+1. Với khách Khánh, nói **“Khánh nợ 1 lon bò húc 20 nghìn”**. Dù văn bản là “20 nghìn” hay “20.000”, bản nháp phải hiện **Hàng: 1 lon bò húc**, **Số tiền nợ: 20.000đ**. Kiểm tra rồi Xác nhận.
+2. Đóng/mở lại app; xem Khánh, tra cứu “Khánh còn nợ bao nhiêu”, xuất CSV/PDF: mặt hàng vẫn có. Thu 5.000đ thì còn nợ 15.000đ, vẫn giữ tên mặt hàng.
+3. Thử “Khánh nợ 1 bao gạo 1.200.000”, “Khánh nợ tiền hai chục triệu”, “Khánh nợ 1 món hàng 1,5 triệu”. Kiểm tra lần lượt 1.200.000đ, 20.000.000đ, 1.500.000đ.
+4. Nói chỉ số lượng “Khánh nợ 5 lon bò húc”: không được lấy 5 làm tiền. Hai giá không có tổng rõ ràng, “hai triệu ba”, số âm, ngày hoặc số điện thoại phải yêu cầu sửa/đối chiếu, không tự ghi.
+5. Nhập tay hoặc sửa giao dịch nợ khách: có ô hàng hóa/số lượng. Giao dịch cũ không ghi mặt hàng vẫn xem được.
+
 ## Bản sửa 1.2.1 (22) — sẵn sàng trên TestFlight
 
 Source `5feedbe`, [build #16](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec1f30004ce28f20ee0b83): sửa dạng văn bản Apple Speech đổi “50 nghìn” thành “50.000”. Không cần thêm “đồng”. Tên đứng sau xe/nhà xe/nhà cung cấp/công ty được đối chiếu với tên đầy đủ hoặc biệt danh của hồ sơ có sẵn; nếu chưa có thì đề xuất tên mới trong giao dịch nợ tiền hàng. Không tự lưu trước Xác nhận. **63/63 XCTest đạt** (53 core + 5 app + 5 UI). Apple processing và khai báo mã hóa đã hoàn tất; bản **1.2.1 (22)** đang **Testing** trong **SoNo AI Internal**. Mở TestFlight → Tạp Hóa Mỹ Thạnh → Update, kiểm tra đúng **1.2.1 (22)**; giữ app để giữ dữ liệu.
