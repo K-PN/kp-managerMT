@@ -83,8 +83,17 @@ final class SoNoUITests: XCTestCase {
         XCTAssertTrue(control.waitForExistence(timeout: 5), confirmation.debugDescription)
         XCTAssertTrue(control.isHittable && viewport.contains(control.frame), control.debugDescription)
         control.tap()
-        expectation(for: NSPredicate(format: "value == %@", "1"), evaluatedWith: confirmation)
-        waitForExpectations(timeout: 5)
+        let switchedOn = NSPredicate(format: "value == %@", "1")
+        let firstTap = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: switchedOn, object: confirmation)], timeout: 10)
+        if firstTap != .completed && confirmation.value as? String == "0" {
+            // Simulator can dismiss a transient keyboard/system overlay on the
+            // first tap. Re-resolve the labelled control and retry only while off.
+            screenshot("confirmation-first-tap-not-applied")
+            XCTAssertTrue(confirmation.isHittable && viewport.contains(confirmation.frame), app.debugDescription)
+            confirmation.tap()
+        }
+        let result = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: switchedOn, object: confirmation)], timeout: 15)
+        XCTAssertEqual(result, .completed, confirmation.debugDescription)
         screenshot(screenshotName)
     }
     private func assertReceivable(contains amount: String) {
