@@ -1,6 +1,8 @@
 # Kiểm thử Tạp Hóa Mỹ Thạnh
 
-## Bản 1.4.0 — đã kiểm chứng iOS, chưa lên TestFlight
+## Bản 1.4.0 (30) — đã lên TestFlight nội bộ
+
+[Build ký #21](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec910dab17f8deb753127d), source `369f933`: **77/77 XCTest đạt**, ký IPA **1.4.0 (30)** và upload Apple thành công. Processing và khai báo mã hóa hoàn tất; đã gán **SoNo AI Internal**. App Store Connect ghi nhận tài khoản chủ sở hữu **Installed 1.4.0 (30)** ngày 05/11/2026. Mở TestFlight → **Tạp Hóa Mỹ Thạnh**, kiểm tra đúng **1.4.0 (30)**. Giữ ứng dụng hiện tại để giữ dữ liệu.
 
 [Verify iOS #9](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec87efab17f8deb7530ee9), source `073e797`: **77/77 XCTest đạt** (64 core + 6 app + 7 UI), đóng gói Simulator/ảnh thành công ngày 05/11/2026. Chỉ chạy workflow kiểm chứng, chưa ký IPA hoặc upload Apple theo yêu cầu người dùng.
 
@@ -10,7 +12,7 @@
 4. Không còn khối “Giao dịch đề xuất”. Các ô tiền, hàng, đã trả và ngày nằm trong **Sửa chi tiết**, mặc định thu gọn khi đủ dữ liệu; thiếu tiền hoặc ngày chưa rõ thì mở để sửa. Thay văn bản phải phân tích lại trước xác nhận.
 5. Bật cỡ chữ iPhone lớn nhất, kiểm tra Tổng quan, lịch sử và màn hình ghi sổ: chữ trong app tối đa xLarge, mặt hàng dài chuyển dòng, tiền và nút Xác nhận vẫn đọc/bấm được. Thử tên hàng dài ở iPhone màn hình nhỏ.
 
-Mã đã có trên GitHub và đã kiểm chứng trên Simulator. Chưa có bản TestFlight 1.4.0 để cài; chưa thử thu âm thật trên iPhone thay người dùng.
+Mã đã có trên GitHub và đã kiểm chứng trên Simulator. Chưa thử thu âm thật trên iPhone thay người dùng; thử các câu trên trong bản 1.4.0 (30).
 
 ## Bản 1.3.0 (25) — sẵn sàng trên TestFlight
 

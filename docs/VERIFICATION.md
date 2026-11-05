@@ -1,6 +1,12 @@
 # Kết quả kiểm tra và việc còn cần chạy
 
-## Ghi sổ gọn và chữ lớn 1.4.0 — đã kiểm chứng iOS, chưa phát hành
+## Phát hành TestFlight 1.4.0 (30)
+
+Ngày 05/11/2026, người dùng đã yêu cầu ký và upload sau khi kiểm chứng. [Build ký #21](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec910dab17f8deb753127d), source `369f933`, thành công sau **17m41s**: **77/77 XCTest đạt** (64 core + 6 app + 7 UI), archive/export IPA **1.4.0 (30)** 1,31 MB và kiểm tra metadata đạt. Apple trả **UPLOAD SUCCEEDED with no errors**, delivery UUID `66e055ac-a87b-45e0-a630-53edf7de6470`.
+
+Apple processing và khai báo mã hóa hệ điều hành đã hoàn tất. Đã gán **1.4.0 (30)** vào **SoNo AI Internal**; trang Testers của nhóm xác nhận **Installed 1.4.0 (30)** cho tài khoản chủ sở hữu ngày 05/11/2026. Đây là phát hành nội bộ; chưa gán 1.4.0 vào nhóm ngoài **Mỹ Thạnh Testers** trong lượt này. Ảnh Codemagic sau upload lưu tại `build/evidence/my-thanh-140-upload.png` (ignored). Chưa thử thu âm trên iPhone thay người dùng.
+
+## Kiểm chứng trước phát hành 1.4.0
 
 Ngày 05/11/2026, [Verify iOS #9](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec87efab17f8deb7530ee9), source `073e797`, **hoàn tất thành công**: 64 core + 6 app + 7 UI = **77/77 XCTest đạt**, đóng gói app Simulator và ảnh XCTest thành công. Theo yêu cầu người dùng, chỉ chạy `ios-verify` với `CODE_SIGNING_ALLOWED=NO`; **chưa ký IPA hoặc upload 1.4.0 lên TestFlight**.
 
