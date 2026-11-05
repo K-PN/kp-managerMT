@@ -2,6 +2,39 @@ import XCTest
 @testable import SoNoCore
 
 final class ParserTests: XCTestCase {
+    func testDebtWithoutSpokenDongAndAtStartOfSentence() {
+        for text in ["Nợ 20 nghìn", "Nợ hai mươi nghìn", "Ghi nợ 20 ngàn", "Chị Mai nợ 20 nghìn."] {
+            let draft = VietnameseVoiceParser().parse(text, customers: [Customer(name: "Chị Mai")])
+            XCTAssertEqual(draft.intent, .debt, text)
+            XCTAssertEqual(draft.amount, 20_000, text)
+        }
+    }
+    func testSupplierCuesRouteDebtPaymentAndLookup() {
+        for name in ["Xe An", "Nhà cung cấp An", "Công ty An"] {
+            let supplier = Customer(name: name, book: .goods)
+            let parser = VietnameseVoiceParser()
+            let debt = parser.parse("\(name) nợ 20 nghìn", customers: [supplier])
+            XCTAssertEqual(debt.intent, .purchase); XCTAssertEqual(debt.amount, 20_000)
+            XCTAssertEqual(debt.paidNow, 0); XCTAssertEqual(debt.candidateIDs, [supplier.id])
+            XCTAssertNotNil(debt.goodsDescription)
+            XCTAssertEqual(parser.parse("Trả \(name) 10 nghìn", customers: [supplier]).intent, .supplierPayment)
+            let query = parser.parse("Tra cứu nợ \(name)", customers: [supplier])
+            XCTAssertEqual(query.intent, .supplierBalance); XCTAssertTrue(query.isQuery)
+        }
+        XCTAssertEqual(VietnameseVoiceParser().parse("Tra cứu khách An", customers: []).intent, .balance)
+    }
+    func testSameNameDoesNotCrossCustomerAndSupplierBooks() {
+        let customer = Customer(name: "An", book: .debt), supplier = Customer(name: "An", book: .goods)
+        let parser = VietnameseVoiceParser()
+        XCTAssertEqual(parser.parse("An nợ 20 nghìn", customers: [customer, supplier]).candidateIDs, [customer.id])
+        XCTAssertEqual(parser.parse("Xe An nợ 20 nghìn", customers: [customer, supplier]).candidateIDs, [supplier.id])
+        XCTAssertFalse(AccountBook.hasSupplierCue("Anh Xem nợ 20 nghìn"))
+    }
+    func testNewSupplierVoiceKeepsNameAndVND() {
+        let draft = VietnameseVoiceParser().parse("Thêm xe An nợ 20 nghìn", customers: [])
+        XCTAssertEqual(draft.intent, .purchase); XCTAssertEqual(draft.newCustomerName, "xe An")
+        XCTAssertEqual(draft.amount, 20_000)
+    }
     func testVietnameseMoneyPhrases() {
         let cases: [(String, Int64)] = [("500 nghìn", 500_000), ("500 ngàn", 500_000), ("Năm trăm k", 500_000), ("Một triệu rưỡi", 1_500_000), ("Một triệu hai trăm", 1_200_000), ("Hai triệu ba trăm năm mươi nghìn", 2_350_000), ("Một triệu không trăm năm mươi nghìn", 1_050_000), ("2,5 triệu", 2_500_000), ("500.000", 500_000), ("250000", 250_000), ("500k", 500_000), ("500.000 ₫", 500_000), ("500.000 đ", 500_000)]
         for (text, expected) in cases { XCTAssertEqual(VietnameseMoneyParser().parse(text).amount, expected, text) }

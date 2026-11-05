@@ -26,6 +26,24 @@ public enum TextKey {
     }
 }
 
+public enum AccountBook: String, Codable, CaseIterable, Sendable {
+    case debt, goods
+    public var title: String { self == .debt ? "Nợ khách" : "Tiền hàng" }
+    public var kinds: [TransactionKind] { self == .goods ? [.purchase, .supplierPayment] : [.debt, .collection] }
+    public func contains(_ entry: DebtTransaction, in entries: [DebtTransaction]) -> Bool {
+        let kind = entry.kind == .reversal ? entries.first(where: { $0.id == entry.reversalOf })?.kind : entry.kind
+        guard let kind else { return false }
+        return self == .goods ? [.purchase, .supplierPayment].contains(kind) : ![.purchase, .supplierPayment, .reversal].contains(kind)
+    }
+    public static func hasSupplierCue(_ text: String) -> Bool {
+        TextKey.normalize(text).range(of: #"\b(?:xe|nha cung cap|cong ty)\b"#, options: .regularExpression) != nil
+    }
+    public static func inferred(for customer: Customer, entries: [DebtTransaction] = []) -> Self {
+        if let book = customer.book { return book }
+        return hasSupplierCue(customer.name) || entries.contains(where: { $0.customerID == customer.id && [.purchase, .supplierPayment].contains($0.kind) }) ? .goods : .debt
+    }
+}
+
 public struct Customer: Codable, Identifiable, Equatable, Sendable {
     public var id: UUID
     public var name: String
@@ -36,9 +54,11 @@ public struct Customer: Codable, Identifiable, Equatable, Sendable {
     public var createdAt: Date
     public var updatedAt: Date
     public var mergedInto: UUID?
-    public init(id: UUID = UUID(), name: String, nickname: String = "", phone: String = "", address: String = "", note: String = "", now: Date = Date()) {
+    // Optional so customers saved by previous versions continue to decode.
+    public var book: AccountBook?
+    public init(id: UUID = UUID(), name: String, nickname: String = "", phone: String = "", address: String = "", note: String = "", now: Date = Date(), book: AccountBook? = nil) {
         self.id = id; self.name = name; self.nickname = nickname; self.phone = phone
-        self.address = address; self.note = note; self.createdAt = now; self.updatedAt = now
+        self.address = address; self.note = note; self.createdAt = now; self.updatedAt = now; self.book = book
     }
     public func matches(_ query: String) -> Bool {
         let key = TextKey.normalize(query)
@@ -55,7 +75,7 @@ public enum TransactionKind: String, Codable, CaseIterable, Sendable {
         case .debt: return "Ghi nợ"
         case .loan: return "Cho vay"
         case .collection: return "Thu nợ"
-        case .purchase: return "Nhập hàng"
+        case .purchase: return "Nợ tiền hàng"
         case .supplierPayment: return "Trả tiền hàng"
         case .borrowing: return "Tôi vay khách"
         case .repayment: return "Tôi trả khoản vay"

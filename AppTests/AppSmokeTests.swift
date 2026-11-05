@@ -4,6 +4,20 @@ import SoNoCore
 import PDFKit
 
 final class AppSmokeTests: XCTestCase {
+    func testAccountStatementsOnlyIncludeRelevantTotals() throws {
+        let customer = Customer(name: "An")
+        let entries = [DebtTransaction(customerID: customer.id, amount: 20_000, kind: .debt)]
+        let balance = try LedgerCalculator.balance(entries)
+        let url = try PDFReports.statement(customer: customer, entries: entries, balance: balance, book: .debt)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let text = try XCTUnwrap(PDFDocument(url: url)?.string)
+        XCTAssertTrue(text.contains("20.000")); XCTAssertFalse(text.contains("tiền hàng"))
+        let goods = [DebtTransaction(customerID: customer.id, amount: 30_000, kind: .purchase, goodsDescription: "Sữa")]
+        let goodsURL = try PDFReports.statement(customer: customer, entries: goods, balance: LedgerCalculator.balance(goods), book: .goods)
+        defer { try? FileManager.default.removeItem(at: goodsURL) }
+        let goodsText = try XCTUnwrap(PDFDocument(url: goodsURL)?.string)
+        XCTAssertTrue(goodsText.contains("30.000")); XCTAssertFalse(goodsText.contains("nợ khách")); XCTAssertFalse(goodsText.contains("Đã thu nợ"))
+    }
     func testPDFContainsBrandAndGrandTotals() throws {
         let customer = Customer(name: "Nhà cung cấp An")
         var snapshot = LedgerSnapshot(); snapshot.customers = [customer]

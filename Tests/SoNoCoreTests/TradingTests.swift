@@ -2,6 +2,38 @@ import XCTest
 @testable import SoNoCore
 
 final class TradingTests: XCTestCase {
+    func testSameNameAcrossBooksPersistsSeparatelyAndStillBlocksSameBookDuplicate() async throws {
+        let service = try ledger()
+        let customer = Customer(name: "An", book: .debt), supplier = Customer(name: "An", book: .goods)
+        try await service.saveCustomer(customer)
+        let proposal = try TransactionProposal(snapshot: await service.snapshot(), customerID: supplier.id, kind: .purchase, amount: 20_000, goods: "Sữa", newCustomer: supplier)
+        try await service.confirm(proposal, confirmed: true)
+        let snapshot = try await service.snapshot()
+        XCTAssertEqual(snapshot.customers.count, 2)
+        XCTAssertEqual(try LedgerCalculator.balance(snapshot.entries(for: supplier.id)).goodsPayable, 20_000)
+        XCTAssertEqual(try LedgerCalculator.balance(snapshot.entries(for: customer.id)).receivable, 0)
+        do { try await service.saveCustomer(Customer(name: "An", book: .goods)); XCTFail("Same-book duplicate accepted") } catch { XCTAssertEqual(error as? LedgerError, .duplicateCustomer) }
+    }
+    func testLegacyCustomerWithoutBookStillDecodesAndInfersSupplier() throws {
+        let customer = Customer(name: "Anh An")
+        var json = try JSONSerialization.jsonObject(with: JSONCoding.encode(customer)) as! [String: Any]
+        json.removeValue(forKey: "book")
+        let restored = try JSONDecoder().decode(Customer.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertNil(restored.book); XCTAssertEqual(AccountBook.inferred(for: restored), .debt)
+        let purchase = DebtTransaction(customerID: restored.id, amount: 20_000, kind: .purchase)
+        XCTAssertEqual(AccountBook.inferred(for: restored, entries: [purchase]), .goods)
+        var explicit = restored; explicit.book = .debt
+        XCTAssertEqual(AccountBook.inferred(for: explicit, entries: [purchase]), .debt)
+    }
+    func testBooksKeepTheirOwnTransactionsAndReversals() {
+        let id = UUID()
+        let debt = DebtTransaction(customerID: id, amount: 20_000, kind: .debt)
+        let goods = DebtTransaction(customerID: id, amount: 30_000, kind: .purchase)
+        let reversal = DebtTransaction(customerID: id, amount: 30_000, kind: .reversal, reversalOf: goods.id)
+        let entries = [debt, goods, reversal]
+        XCTAssertEqual(entries.filter { AccountBook.debt.contains($0, in: entries) }.map(\.id), [debt.id])
+        XCTAssertEqual(entries.filter { AccountBook.goods.contains($0, in: entries) }.map(\.id), [goods.id, reversal.id])
+    }
     private func ledger() throws -> LedgerService {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

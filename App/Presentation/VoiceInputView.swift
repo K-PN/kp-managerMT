@@ -28,8 +28,9 @@ struct VoiceInputView: View {
     @FocusState private var editingMoney: MoneyField?
     @FocusState private var editingTranscript: Bool
     private var currentReview: Bool { draft != nil && reviewText == text && !speech.recording && !processing }
-    private var query: Bool { [.balance, .todayCollections, .overdue].contains(intent) }
-    private var pendingCustomer: Customer? { creatingNew ? Customer(name: newName) : nil }
+    private var query: Bool { [.balance, .supplierBalance, .todayCollections, .overdue].contains(intent) }
+    private var book: AccountBook { [.purchase, .supplierPayment, .supplierBalance].contains(intent) ? .goods : .debt }
+    private var pendingCustomer: Customer? { creatingNew ? Customer(name: newName, book: book) : nil }
     private var actionKind: TransactionKind? {
         switch intent {
         case .debt: return .debt
@@ -93,6 +94,7 @@ struct VoiceInputView: View {
             .onChange(of: selectedCustomerID) { _, _ in if query { updateAnswer() } }
             .onChange(of: intent) { _, value in
                 if value == .createCustomer { creatingNew = true }
+                if let id = selectedCustomerID, !model.customers(in: book).contains(where: { $0.id == id }) { selectedCustomerID = nil }
                 if query { creatingNew = false; updateAnswer() }
             }
             .onDisappear { started = false; speech.cancel() }
@@ -119,25 +121,24 @@ struct VoiceInputView: View {
     }
     private var selection: some View {
         Section("Kết quả tạm thời") {
+            if ![.createCustomer, .todayCollections, .overdue].contains(intent) {
             Picker("Thao tác", selection: $intent) {
-                Text("Chọn thao tác").tag(VoiceIntent.unknown)
                 Text("Ghi nợ").tag(VoiceIntent.debt)
                 Text("Thu nợ").tag(VoiceIntent.collection)
-                Text("Nhập hàng").tag(VoiceIntent.purchase)
+                Text("Nợ tiền hàng").tag(VoiceIntent.purchase)
                 Text("Trả tiền hàng").tag(VoiceIntent.supplierPayment)
-                Text("Tra cứu nợ").tag(VoiceIntent.balance)
-                Text("Thu nợ hôm nay").tag(VoiceIntent.todayCollections)
-                Text("Thêm khách mới").tag(VoiceIntent.createCustomer)
-                if intent == .overdue { Text("Tra cứu dữ liệu cũ").tag(VoiceIntent.overdue) }
+                Text("Tra cứu khách nợ").tag(VoiceIntent.balance)
+                Text("Tra cứu nợ xe").tag(VoiceIntent.supplierBalance)
             }.accessibilityIdentifier("voice.intent")
+            }
             if intent != .todayCollections && intent != .overdue {
-                if !query { Toggle("Thêm khách / nhà cung cấp mới", isOn: $creatingNew).disabled(intent == .createCustomer) }
+                if !query { Toggle(book == .goods ? "Thêm xe / nhà cung cấp mới" : "Thêm khách mới", isOn: $creatingNew).disabled(intent == .createCustomer) }
                 if creatingNew {
                     TextField("Tên khách mới", text: $newName).autocorrectionDisabled().accessibilityIdentifier("voice.newName")
                 } else {
-                    Picker(intent == .purchase || intent == .supplierPayment ? "Nhà cung cấp" : "Khách hàng", selection: $selectedCustomerID) {
+                    Picker(book == .goods ? "Xe / nhà cung cấp" : "Khách nợ", selection: $selectedCustomerID) {
                         Text("Chọn đúng người").tag(nil as UUID?)
-                        ForEach(model.customers) { customer in Text(customer.name + (customer.phone.isEmpty ? "" : " · " + customer.phone)).tag(Optional(customer.id)) }
+                        ForEach(model.customers(in: book)) { customer in Text(customer.name + (customer.phone.isEmpty ? "" : " · " + customer.phone)).tag(Optional(customer.id)) }
                     }.accessibilityIdentifier("voice.customer")
                 }
             }
@@ -150,6 +151,7 @@ struct VoiceInputView: View {
         Section("Giao dịch đề xuất") {
             if intent == .purchase { TextField("Mặt hàng / số lượng", text: $goods, axis: .vertical).accessibilityIdentifier("voice.goods") }
             TextField(intent == .purchase ? "Tổng tiền hàng (đồng)" : "Số tiền (đồng)", text: $amount).keyboardType(.numberPad).focused($editingMoney, equals: .amount).accessibilityIdentifier("voice.amount")
+            if let value = VietnameseMoneyParser().parse(amount).amount { Text(VND.string(value)).font(.title2.bold()).foregroundStyle(.teal).accessibilityIdentifier("voice.amountVND") }
             if intent == .purchase { TextField("Đã trả (đồng)", text: $paid).keyboardType(.numberPad).focused($editingMoney, equals: .paid).accessibilityIdentifier("voice.paid") }
             DatePicker("Ngày giao dịch", selection: $date, in: ...Date(), displayedComponents: [.date, .hourAndMinute])
         }
@@ -159,12 +161,14 @@ struct VoiceInputView: View {
             if creatingNew { LabeledContent("Khách mới", value: newName) }
             else if let id = selectedCustomerID { LabeledContent("Đúng người giao dịch", value: model.customerName(id)) }
             if let proposal {
-                LabeledContent("Nợ khách cũ", value: VND.string(proposal.before.receivable)).accessibilityIdentifier("voice.oldDebt")
-                LabeledContent("Nợ tiền hàng cũ", value: VND.string(proposal.before.goodsPayable))
+                if book == .debt {
+                    LabeledContent("Nợ khách cũ", value: VND.string(proposal.before.receivable)).accessibilityIdentifier("voice.oldDebt")
+                } else { LabeledContent("Nợ tiền hàng cũ", value: VND.string(proposal.before.goodsPayable)) }
                 if let entry = proposal.entries.first { LabeledContent(entry.kind.title, value: VND.string(entry.amount)) }
                 if intent == .purchase, let paidAmount { LabeledContent("Đã trả lần này", value: VND.string(paidAmount)) }
-                LabeledContent("Nợ khách sau ghi", value: VND.string(proposal.after.receivable)).accessibilityIdentifier("voice.newDebt")
-                LabeledContent("Nợ tiền hàng sau ghi", value: VND.string(proposal.after.goodsPayable)).accessibilityIdentifier("voice.newGoodsDebt")
+                if book == .debt {
+                    LabeledContent("Nợ khách sau ghi", value: VND.string(proposal.after.receivable)).accessibilityIdentifier("voice.newDebt")
+                } else { LabeledContent("Nợ tiền hàng sau ghi", value: VND.string(proposal.after.goodsPayable)).accessibilityIdentifier("voice.newGoodsDebt") }
             } else {
                 Text(validationMessage).font(.caption).foregroundStyle(.red)
             }
@@ -205,8 +209,8 @@ struct VoiceInputView: View {
     private func analyze() {
         editingMoney = nil; editingTranscript = false
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { model.error = "Chưa nghe rõ. Bạn có thể nói lại hoặc nhập văn bản."; return }
-        let parsed = VietnameseVoiceParser().parse(text, customers: model.customers, now: Date())
-        draft = parsed; reviewText = text; intent = parsed.intent; date = parsed.effectiveDate; completed = false
+        let parsed = VietnameseVoiceParser().parse(text, customers: model.voiceCustomers, now: Date())
+        draft = parsed; reviewText = text; intent = parsed.intent == .unknown ? .debt : parsed.intent; date = parsed.effectiveDate; completed = false
         selectedCustomerID = parsed.candidateIDs.count == 1 ? parsed.candidateIDs.first : nil
         creatingNew = parsed.newCustomerName != nil || intent == .createCustomer
         newName = parsed.newCustomerName ?? ""; amount = parsed.amount.map(String.init) ?? ""

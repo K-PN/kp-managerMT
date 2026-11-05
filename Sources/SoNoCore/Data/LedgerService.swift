@@ -15,8 +15,9 @@ public actor LedgerService: CustomerRepository, DebtRepository, TransactionRepos
             let state = try store.snapshot()
             let old = state.customers.first { $0.id == value.id }
             guard old?.mergedInto == nil, value.mergedInto == nil else { throw LedgerError.invalid("Khách này đã được gộp.") }
-            let changesName = old.map { TextKey.normalize($0.name) != TextKey.normalize(value.name) } ?? true
-            if changesName && !allowDuplicate && state.customers.contains(where: { $0.id != value.id && $0.mergedInto == nil && TextKey.normalize($0.name) == TextKey.normalize(value.name) }) { throw LedgerError.duplicateCustomer }
+            let book = AccountBook.inferred(for: value, entries: state.transactions)
+            let changesName = old.map { TextKey.normalize($0.name) != TextKey.normalize(value.name) || AccountBook.inferred(for: $0, entries: state.transactions) != book } ?? true
+            if changesName && !allowDuplicate && state.customers.contains(where: { $0.id != value.id && $0.mergedInto == nil && TextKey.normalize($0.name) == TextKey.normalize(value.name) && AccountBook.inferred(for: $0, entries: state.transactions) == book }) { throw LedgerError.duplicateCustomer }
             value.createdAt = old?.createdAt ?? Date(); value.updatedAt = Date()
             try store.save(value)
             try store.insert(AuditEvent(entityID: value.id, event: old == nil ? "Tạo khách hàng" : "Sửa khách hàng", oldValue: try old.map(JSONCoding.string), newValue: try JSONCoding.string(value)))
@@ -49,7 +50,7 @@ public actor LedgerService: CustomerRepository, DebtRepository, TransactionRepos
                 customer.name = customer.name.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !customer.name.isEmpty, customer.name.count <= 200, customer.mergedInto == nil,
                       entries.allSatisfy({ $0.customerID == customer.id }) else { throw LedgerError.invalid("Khách mới không hợp lệ.") }
-                guard !state.customers.contains(where: { $0.id == customer.id || $0.mergedInto == nil && TextKey.normalize($0.name) == TextKey.normalize(customer.name) }) else { throw LedgerError.duplicateCustomer }
+                guard !state.customers.contains(where: { $0.id == customer.id || $0.mergedInto == nil && TextKey.normalize($0.name) == TextKey.normalize(customer.name) && AccountBook.inferred(for: $0, entries: state.transactions) == AccountBook.inferred(for: customer) }) else { throw LedgerError.duplicateCustomer }
                 try store.save(customer)
                 try store.insert(AuditEvent(entityID: customer.id, event: "Tạo khách hàng", newValue: try JSONCoding.string(customer), source: entries[0].source))
                 state.customers.append(customer)

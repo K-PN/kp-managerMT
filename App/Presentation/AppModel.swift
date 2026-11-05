@@ -60,15 +60,25 @@ final class AppModel: ObservableObject {
     }
     func customerName(_ id: UUID) -> String { state.customers.first { $0.id == id }?.name ?? "Khách hàng" }
     func entries(for id: UUID) -> [DebtTransaction] { (try? state.entries(for: id)) ?? [] }
+    func book(for customer: Customer) -> AccountBook { AccountBook.inferred(for: customer, entries: entries(for: customer.id)) }
+    func customers(in book: AccountBook) -> [Customer] {
+        customers.filter { customer in
+            self.book(for: customer) == book || entries(for: customer.id).contains { book.contains($0, in: state.transactions) }
+        }
+    }
+    var voiceCustomers: [Customer] {
+        customers.map { customer in var value = customer; value.book = book(for: customer); return value }
+    }
     func balance(for id: UUID) -> Balance {
         if let value = summary?.balances[id] { return value }
         return summary?.balances[(try? state.rootID(id)) ?? id] ?? Balance()
     }
     func answer(for draft: VoiceDraft, selectedCustomerID: UUID?) throws -> String {
         switch draft.intent {
-        case .balance:
+        case .balance, .supplierBalance:
             guard let id = selectedCustomerID else { throw LedgerError.invalid("Hãy chọn một khách hàng để tra cứu.") }
-            return "\(customerName(id))\nNợ khách: \(VND.string(balance(for: id).receivable))\nNợ tiền hàng: \(VND.string(balance(for: id).goodsPayable))"
+            let goods = draft.intent == .supplierBalance
+            return "\(customerName(id))\n\(goods ? "Nợ tiền hàng" : "Nợ khách"): \(VND.string(goods ? balance(for: id).goodsPayable : balance(for: id).receivable))"
         case .todayCollections:
             let entries = try LedgerCalculator.active(state.transactions).filter { $0.kind == .collection && VietnameseDate.calendar.isDateInToday($0.effectiveDate) }
             return "Đã thu hôm nay: \(VND.string(summary?.collectedToday ?? 0)). " + entries.map { "\(customerName($0.customerID)): \(VND.string($0.amount))" }.joined(separator: "; ")

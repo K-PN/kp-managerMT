@@ -2,7 +2,7 @@ import UIKit
 import SoNoCore
 
 enum PDFReports {
-    static func statement(customer: Customer, entries: [DebtTransaction], balance: Balance) throws -> URL {
+    static func statement(customer: Customer, entries: [DebtTransaction], balance: Balance, book: AccountBook? = nil) throws -> URL {
         let active = try LedgerCalculator.active(entries)
         let activeIDs = Set(active.map(\.id))
         let rows = entries.sorted { $0.effectiveDate < $1.effectiveDate }.map { entry in
@@ -12,7 +12,14 @@ enum PDFReports {
         let paid = try CheckedMoney.sum(active.filter { $0.kind == .supplierPayment }.map(\.amount))
         let collected = try CheckedMoney.sum(active.filter { $0.kind == .collection }.map(\.amount))
         let header = "\(AppBrand.name.uppercased())\nPHIẾU ĐỐI CHIẾU\n\nKhách / nhà cung cấp: \(customer.name)\nĐiện thoại: \(customer.phone)\nLập lúc: \(VietnameseDate.display(Date()))\n\nLỊCH SỬ GIAO DỊCH"
-        let totals = "TỔNG CỘNG\nTổng tiền hàng: \(VND.string(purchased))\nĐã trả tiền hàng: \(VND.string(paid))\nĐã thu nợ: \(VND.string(collected))\nTổng nợ khách: \(VND.string(balance.receivable))\nTổng nợ tiền hàng: \(VND.string(balance.goodsPayable))"
+        let totals: String
+        if book == .goods {
+            totals = "TỔNG CỘNG\nTổng tiền hàng: \(VND.string(purchased))\nĐã trả tiền hàng: \(VND.string(paid))\nTổng nợ tiền hàng: \(VND.string(balance.goodsPayable))"
+        } else if book == .debt {
+            totals = "TỔNG CỘNG\nĐã thu nợ: \(VND.string(collected))\nTổng nợ khách: \(VND.string(balance.receivable))"
+        } else {
+            totals = "TỔNG CỘNG\nTổng tiền hàng: \(VND.string(purchased))\nĐã trả tiền hàng: \(VND.string(paid))\nĐã thu nợ: \(VND.string(collected))\nTổng nợ khách: \(VND.string(balance.receivable))\nTổng nợ tiền hàng: \(VND.string(balance.goodsPayable))"
+        }
         return try render(title: "doi-chieu-my-thanh", paragraphs: [header] + rows + [totals, "Người lập phiếu: __________________\n\nKhách hàng xác nhận: __________________"])
     }
     static func collections(_ reports: [CollectionReport], period: ReportPeriod) throws -> URL {

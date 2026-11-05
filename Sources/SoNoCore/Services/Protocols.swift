@@ -25,7 +25,7 @@ public protocol BackupService: Sendable {
 public protocol ReminderService: Sendable {
     func synchronize(snapshot: LedgerSnapshot) async throws
 }
-public enum VoiceIntent: String, Codable, Sendable { case debt, collection, purchase, supplierPayment, createCustomer, balance, todayCollections, overdue, unknown }
+public enum VoiceIntent: String, Codable, Sendable { case debt, collection, purchase, supplierPayment, createCustomer, balance, supplierBalance, todayCollections, overdue, unknown }
 public struct VoiceDraft: Codable, Sendable {
     public var transcript: String
     public var intent: VoiceIntent
@@ -36,5 +36,5 @@ public struct VoiceDraft: Codable, Sendable {
     public var newCustomerName: String? = nil
     public var goodsDescription: String? = nil
     public var paidNow: Int64? = nil
-    public var isQuery: Bool { [.balance, .todayCollections, .overdue].contains(intent) }
+    public var isQuery: Bool { [.balance, .supplierBalance, .todayCollections, .overdue].contains(intent) }
 }

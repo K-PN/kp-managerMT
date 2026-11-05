@@ -4,15 +4,16 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
     public init() {}
     public func parse(_ text: String, customers: [Customer], now: Date = Date()) -> VoiceDraft {
         let key = TextKey.normalize(text)
+        let supplier = AccountBook.hasSupplierCue(text)
         var intent: VoiceIntent = .unknown
         if key.contains("qua han") { intent = .overdue }
         else if key.contains("hom nay") && (key.contains("ai tra") || key.contains("thu duoc")) { intent = .todayCollections }
-        else if key.contains("bao nhieu") || key.contains("tra cuu") || key.contains("xem no") { intent = .balance }
+        else if key.contains("bao nhieu") || key.contains("tra cuu") || key.contains("xem no") { intent = supplier ? .supplierBalance : .balance }
         else if ["nhap hang", "lay hang tu", "lay hang cua", "tien nhap hang"].contains(where: key.contains) { intent = .purchase }
         else if key.contains("tra tien hang") || key.contains("thanh toan tien hang") { intent = .supplierPayment }
-        else if key.range(of: #"\btra\b|\bthanh toan\b"#, options: .regularExpression) != nil { intent = .collection }
-        else if ["ghi no", "lay them", "mua", "no them", " no "].contains(where: key.contains) { intent = .debt }
-        else if key.contains("them khach") || key.contains("tao khach") { intent = .createCustomer }
+        else if key.range(of: #"\btra\b|\bthanh toan\b"#, options: .regularExpression) != nil { intent = supplier ? .supplierPayment : .collection }
+        else if key.range(of: #"\b(?:ghi no|lay them|mua|no)\b"#, options: .regularExpression) != nil { intent = supplier || key.contains("no tien hang") ? .purchase : .debt }
+        else if key.contains("them khach") || key.contains("tao khach") || key.contains("them xe") || key.contains("them nha cung cap") { intent = .createCustomer }
         else if key.contains("con no") { intent = .balance }
         var warnings: [String] = []
         var date = now
@@ -21,7 +22,8 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
         if key.range(of: #"\d+[/\-]\d+|ngay mai|hom kia|tuan truoc|thang truoc"#, options: .regularExpression) != nil {
             warnings.append("Có ngày chưa phân tích được. Hãy chọn ngày giao dịch trước khi xác nhận.")
         }
-        let candidates = CustomerMatcher.match(text, customers: customers)
+        let book: AccountBook = [.purchase, .supplierPayment, .supplierBalance].contains(intent) ? .goods : .debt
+        let candidates = CustomerMatcher.match(text, customers: customers.filter { AccountBook.inferred(for: $0) == book })
         if ![.todayCollections, .overdue, .createCustomer].contains(intent) && candidates.count != 1 {
             warnings.append(candidates.isEmpty ? "Chưa tìm thấy khách. Hãy chọn khách hàng." : "Có nhiều khách phù hợp. Hãy chọn đúng người.")
         }
@@ -43,7 +45,7 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
                     if amount == nil { warnings.append("Thành tiền vượt giới hạn.") }
                 } else { amount = nil; warnings.append("Chưa xác định đủ số lượng và đơn giá. Hãy nhập thành tiền.") }
             }
-        } else if ![.balance, .todayCollections, .overdue, .createCustomer].contains(intent) {
+        } else if ![.balance, .supplierBalance, .todayCollections, .overdue, .createCustomer].contains(intent) {
             warnings.append("Cần một số tiền rõ ràng có đơn vị; nhiều khoản cần tách thành giao dịch riêng.")
         }
         var paidNow: Int64?
@@ -69,11 +71,12 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
         if intent == .unknown { warnings.append("Chưa rõ yêu cầu. Hãy chọn loại giao dịch thủ công.") }
         var result = VoiceDraft(transcript: text, intent: intent, candidateIDs: candidates.map(\.id), amount: amount, effectiveDate: date, warnings: warnings)
         result.paidNow = paidNow
-        if intent == .purchase { result.goodsDescription = goods(in: text) }
-        if key.contains("them khach") || key.contains("tao khach") { result.newCustomerName = newName(in: text) }
+        if intent == .purchase { result.goodsDescription = goods(in: text) ?? "Tiền hàng" }
+        if key.contains("them khach") || key.contains("tao khach") || key.contains("them xe") || key.contains("them nha cung cap") { result.newCustomerName = newName(in: text) }
         return result
     }
     private func newName(in text: String) -> String? {
+        if let name = capture(text, pattern: #"(?:thêm|them|tạo|tao)\s+((?:xe|nhà\s+cung\s+cấp|nha\s+cung\s+cap|công\s+ty|cong\s+ty)\s+.+?)(?=\s+(?:ghi\s+nợ|ghi\s+no|nợ|no|nhập\s+hàng|nhap\s+hang|trả|tra|mua)|[,.;]|$)"#) { return name }
         // Fold only for matching, retaining accents in the captured display name.
         capture(text, pattern: #"(?:thêm|them|tạo|tao)\s+khách(?:\s+mới)?\s+(.+?)(?=\s+(?:ghi\s+nợ|nợ|nhập\s+hàng|trả|mua)|[,.;]|$)"#)
         ?? capture(text, pattern: #"(?:them|tao)\s+khach(?:\s+moi)?\s+(.+?)(?=\s+(?:ghi\s+no|no|nhap\s+hang|tra|mua)|[,.;]|$)"#)

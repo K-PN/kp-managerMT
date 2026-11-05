@@ -14,31 +14,32 @@ struct LedgerView: View {
     @State private var to: Date
     @State private var adding = false
     @State private var visibleCount = 100
-    init(kind: TransactionKind? = nil, from: Date? = nil, to: Date? = nil, account: String = "all", openOnly: Bool = false) {
+    init(kind: TransactionKind? = nil, from: Date? = nil, to: Date? = nil, account: String = "debt", openOnly: Bool = false) {
         _kind = State(initialValue: kind); _account = State(initialValue: account); _openOnly = State(initialValue: openOnly)
         _byDate = State(initialValue: from != nil); _from = State(initialValue: from ?? Date()); _to = State(initialValue: to ?? Date())
     }
+    private var book: AccountBook { account == "goods" ? .goods : .debt }
     private var entries: [DebtTransaction] {
         let source = customerID.map { model.entries(for: $0) } ?? model.state.transactions
         let openIDs = Set((model.summary?.balances.values.flatMap { $0.outstanding + $0.goodsOutstanding } ?? []).map(\.id))
         let key = TextKey.normalize(query)
         return source.filter { entry in
             let matchesText = query.isEmpty || TextKey.normalize(model.customerName(entry.customerID) + " " + entry.note + " " + (entry.goodsDescription ?? "") + " " + entry.kind.title).contains(key) || String(entry.amount).contains(query.replacingOccurrences(of: ".", with: ""))
-            let matchesAccount = account == "all" || account == "goods" && [.purchase, .supplierPayment].contains(entry.kind) || account == "debt" && (entry.kind.increasesReceivable || [.collection, .adjustmentDecrease, .advanceUsed].contains(entry.kind))
+            let matchesAccount = book.contains(entry, in: model.state.transactions)
             return matchesText && matchesAccount && (kind == nil || entry.kind == kind) && (!openOnly || openIDs.contains(entry.id)) && (!byDate || LedgerDateRange.contains(entry.effectiveDate, from: from, through: to))
         }.sorted { $0.effectiveDate > $1.effectiveDate }
     }
     var body: some View {
         List {
             Section {
-                Picker("Nhóm", selection: $account) { Text("Tất cả").tag("all"); Text("Nợ khách").tag("debt"); Text("Tiền hàng").tag("goods") }.pickerStyle(.segmented)
-                Picker("Khách / nhà cung cấp", selection: $customerID) {
+                Picker("Sổ", selection: $account) { Text("Nợ khách").tag("debt"); Text("Tiền hàng").tag("goods") }.pickerStyle(.segmented).accessibilityIdentifier("ledger.book")
+                Picker(book == .goods ? "Xe / nhà cung cấp" : "Khách nợ", selection: $customerID) {
                     Text("Tất cả").tag(nil as UUID?)
-                    ForEach(model.customers) { Text($0.name).tag(Optional($0.id)) }
+                    ForEach(model.customers(in: book)) { Text($0.name).tag(Optional($0.id)) }
                 }
                 Picker("Loại giao dịch", selection: $kind) {
                     Text("Tất cả").tag(nil as TransactionKind?)
-                    ForEach(TransactionKind.editable, id: \.self) { Text($0.title).tag(Optional($0)) }
+                    ForEach(book.kinds, id: \.self) { Text($0.title).tag(Optional($0)) }
                 }
                 Toggle("Chỉ khoản còn nợ", isOn: $openOnly)
                 Toggle("Lọc từ ngày - đến ngày", isOn: $byDate).accessibilityIdentifier("ledger.dateFilter")
@@ -55,10 +56,10 @@ struct LedgerView: View {
             }
         }.navigationTitle("Sổ giao dịch").searchable(text: $query, prompt: "Khách, mặt hàng hoặc số tiền")
             .toolbar { Button { adding = true } label: { Label("Thêm giao dịch", systemImage: "plus") } }
-            .sheet(isPresented: $adding) { NavigationStack { TransactionEditorView() } }
+            .sheet(isPresented: $adding) { NavigationStack { TransactionEditorView(kind: book == .goods ? .purchase : .debt) } }
             .onChange(of: from) { _, value in if to < value { to = value }; visibleCount = 100 }
             .onChange(of: to) { _, _ in visibleCount = 100 }
-            .onChange(of: account) { _, _ in kind = nil; visibleCount = 100 }
+            .onChange(of: account) { _, _ in kind = nil; customerID = nil; visibleCount = 100 }
     }
 }
 
@@ -91,6 +92,7 @@ struct TransactionEditorView: View {
     private var parsedAmount: Int64? { VietnameseMoneyParser().parse(amount).amount }
     private var paidAmount: Int64? { paid.trimmingCharacters(in: .whitespaces).isEmpty || paid == "0" ? 0 : VietnameseMoneyParser().parse(paid).amount }
     private var preview: TransactionProposal? { try? proposal() }
+    private var book: AccountBook { [.purchase, .supplierPayment].contains(kind) ? .goods : .debt }
     private var availableKinds: [TransactionKind] {
         if let original, !TransactionKind.editable.contains(original.kind) { return TransactionKind.editable + [original.kind] }
         return TransactionKind.editable
@@ -101,7 +103,7 @@ struct TransactionEditorView: View {
                 Picker("Loại", selection: $kind) { ForEach(availableKinds, id: \.self) { Text($0.title).tag($0) } }.accessibilityIdentifier("transaction.kind")
                 Picker(kind == .purchase || kind == .supplierPayment ? "Nhà cung cấp" : "Khách hàng", selection: $customerID) {
                     Text("Chọn người giao dịch").tag(nil as UUID?)
-                    ForEach(model.customers) { Text($0.name).tag(Optional($0.id)) }
+                    ForEach(model.customers(in: book)) { Text($0.name).tag(Optional($0.id)) }
                     if let original, !model.customers.contains(where: { $0.id == original.customerID }) { Text(model.customerName(original.customerID)).tag(Optional(original.customerID)) }
                 }.disabled(original != nil).accessibilityIdentifier("transaction.customer")
                 if kind == .purchase {
@@ -152,7 +154,10 @@ struct TransactionEditorView: View {
             .onChange(of: paid) { _, _ in confirmed = false }
             .onChange(of: goods) { _, _ in confirmed = false }
             .onChange(of: customerID) { _, _ in confirmed = false }
-            .onChange(of: kind) { _, _ in confirmed = false }
+            .onChange(of: kind) { _, _ in
+                confirmed = false
+                if original == nil, let id = customerID, !model.customers(in: book).contains(where: { $0.id == id }) { customerID = nil }
+            }
             .onChange(of: effectiveDate) { _, _ in confirmed = false }
     }
     private var validationMessage: String {

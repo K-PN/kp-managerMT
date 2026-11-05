@@ -96,8 +96,9 @@ final class SoNoUITests: XCTestCase {
         expectation(for: predicate, evaluatedWith: nil)
         waitForExpectations(timeout: 10)
     }
-    private func addCustomer(_ value: String) {
+    private func addCustomer(_ value: String, supplier: Bool = false) {
         app.tabBars.buttons["Khách hàng"].tap()
+        if supplier { app.buttons["Xe hàng"].tap() }
         app.buttons["customer.add"].tap()
         let field = app.textFields["customer.name"]
         XCTAssertTrue(field.waitForExistence(timeout: 10)); field.tap(); field.typeText(value)
@@ -107,9 +108,9 @@ final class SoNoUITests: XCTestCase {
         XCTAssertTrue(customer.waitForExistence(timeout: 15), app.debugDescription); customer.tap()
     }
     func testGoodsPartialPaymentDashboardFiltersAndReportTotals() {
-        addCustomer("Nha cung cap An")
+        addCustomer("Nha cung cap An", supplier: true)
         app.buttons["customer.newTransaction"].tap()
-        app.buttons["transaction.kind"].tap(); app.buttons["Nhập hàng"].tap()
+        app.buttons["transaction.kind"].tap(); app.buttons["Nợ tiền hàng"].tap()
         let goods = app.descendants(matching: .any).matching(identifier: "transaction.goods").firstMatch
         XCTAssertTrue(goods.waitForExistence(timeout: 10)); goods.tap(); goods.typeText("10 thung sua")
         let total = app.textFields["transaction.amount"]; total.tap(); total.typeText("1000000")
@@ -120,6 +121,7 @@ final class SoNoUITests: XCTestCase {
         app.buttons["transaction.save"].tap()
         XCTAssertTrue(app.buttons["customer.newTransaction"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "customer.goodsPayable").firstMatch.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "customer.receivable").firstMatch.exists)
         app.tabBars.buttons["Tổng quan"].tap()
         let month = app.buttons["dashboard.goodsMonth"]
         XCTAssertTrue(month.waitForExistence(timeout: 10))
@@ -160,5 +162,35 @@ final class SoNoUITests: XCTestCase {
         XCTAssertTrue(customer.waitForExistence(timeout: 10)); customer.tap()
         assertReceivable(contains: "300.000")
         screenshot("16-voice-created-customer")
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "customer.goodsPayable").firstMatch.exists)
+    }
+    func testVoiceSupplierWithoutDongAndSeparateCustomerBook() {
+        app.buttons["voice.open"].tap()
+        let transcript = app.textViews["voice.transcript"]
+        XCTAssertTrue(transcript.waitForExistence(timeout: 10)); transcript.tap(); transcript.typeText("Thêm xe An nợ 20 nghìn")
+        app.buttons["voice.done"].tap(); app.buttons["voice.analyze"].tap()
+        XCTAssertTrue(app.textFields["voice.newName"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.textFields["voice.amount"].value as? String, "20000")
+        XCTAssertFalse(app.staticTexts["Nợ khách cũ"].exists)
+        let confirm = app.buttons["voice.confirm"]
+        for _ in 0..<4 where !confirm.isHittable { app.swipeUp() }
+        XCTAssertTrue(confirm.isEnabled); confirm.tap()
+        XCTAssertTrue(app.staticTexts["Đã xác nhận và lưu"].waitForExistence(timeout: 10))
+        app.buttons["Đóng"].tap(); app.tabBars.buttons["Khách hàng"].tap()
+        XCTAssertFalse(app.staticTexts["xe An"].exists)
+        app.buttons["Xe hàng"].tap()
+        let supplier = app.staticTexts["xe An"].firstMatch
+        XCTAssertTrue(supplier.waitForExistence(timeout: 10)); supplier.tap()
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "customer.receivable").firstMatch.exists)
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "customer.goodsPayable").firstMatch.exists)
+        screenshot("17-supplier-only")
+        app.buttons["voice.open"].tap()
+        let query = app.textViews["voice.transcript"]
+        XCTAssertTrue(query.waitForExistence(timeout: 10)); query.tap(); query.typeText("Tra cứu nợ xe An")
+        app.buttons["voice.done"].tap(); app.buttons["voice.analyze"].tap()
+        let result = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Nợ tiền hàng:" )).firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: 10)); XCTAssertTrue(result.label.contains("20.000"))
+        XCTAssertFalse(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Nợ khách:" )).firstMatch.exists)
+        screenshot("18-supplier-lookup")
     }
 }

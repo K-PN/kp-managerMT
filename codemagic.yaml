@@ -48,7 +48,7 @@ workflows:
         - sono_app_store
       vars:
         BUNDLE_ID: vn.kpn.sonoai
-        MARKETING_VERSION: "1.1.0"
+        MARKETING_VERSION: "1.2.0"
         SONO_INSTALL_SIGNING_TOOLS: "1"
     scripts:
       - name: Validate Apple configuration
