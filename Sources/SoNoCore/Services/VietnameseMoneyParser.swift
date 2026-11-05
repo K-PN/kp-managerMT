@@ -81,14 +81,29 @@ public struct VietnameseMoneyParser: Sendable {
         }
         return Decimal(value + (pending ?? 0))
     }
-    /// Only monetary spans with a currency unit; bare item quantities are never money.
-    public func spans(in text: String) -> [String] {
+    /// Voice transcripts may replace “50 nghìn” with “50.000”. Accept a bare
+    /// number only after an explicit money label; OCR keeps requiring units.
+    public func spans(in text: String, allowBareVND: Bool = false) -> [String] {
         let normalized = TextKey.normalize(text.replacingOccurrences(of: "₫", with: " dong "))
         let word = #"(?:\d+(?:[.,]\d+)*|khong|mot|hai|ba|bon|tu|nam|lam|sau|bay|tam|chin|tram|muoi|linh|le)"#
         let pattern = "\\b(?:\(word)\\s+)*(?:\(word))\\s*(?:ty|trieu|nghin|ngan|k|dong|vnd|d)\\b(?:\\s+(?:\(word)|ty|trieu|nghin|ngan|ruoi)\\b)*"
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
-        return regex.matches(in: normalized, range: NSRange(normalized.startIndex..., in: normalized)).compactMap {
-            Range($0.range, in: normalized).map { String(normalized[$0]) }
+        var found: [(NSRange, String)] = regex.matches(in: normalized, range: NSRange(normalized.startIndex..., in: normalized)).compactMap {
+            guard let range = Range($0.range, in: normalized) else { return nil }
+            return ($0.range, String(normalized[range]))
         }
+        if allowBareVND, let numbers = try? NSRegularExpression(pattern: #"(?<![\p{L}\p{N}.,/\-])(?:\d{1,3}(?:\.\d{3})+|\d+)(?![\p{L}\p{N}]|[.,]\d)"#) {
+            for match in numbers.matches(in: normalized, range: NSRange(normalized.startIndex..., in: normalized)) {
+                guard !found.contains(where: { NSIntersectionRange($0.0, match.range).length > 0 }),
+                      let range = Range(match.range, in: normalized) else { continue }
+                let before = String(normalized[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let after = String(normalized[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let labelled = before.range(of: #"\b(?:no|tra|thu|tong|tong tien|tong tien hang|thanh tien|thanh toan|so tien|gia)(?:\s+(?:la|them))?\s*[:=]?\s*$"#, options: .regularExpression) != nil
+                let endsAmount = after.isEmpty || after.range(of: #"^[,.;!?]|^(?:da tra|con no|hom nay|hom qua|cho|cua)\b"#, options: .regularExpression) != nil
+                guard (labelled || before.isEmpty), endsAmount else { continue }
+                found.append((match.range, String(normalized[range]) + " dong"))
+            }
+        }
+        return found.sorted { $0.0.location < $1.0.location }.map { $0.1 }
     }
 }

@@ -2,6 +2,47 @@ import XCTest
 @testable import SoNoCore
 
 final class ParserTests: XCTestCase {
+    func testAppleSpeechFormattedVNDNeedsNoCurrencySuffix() {
+        let parser = VietnameseVoiceParser()
+        for text in ["nợ 50.000", "Nợ 50000", "Ghi nợ 50.000.", "Chị Mai nợ 50.000", "Thu nợ 50.000", "Trả xe An 50.000"] {
+            XCTAssertEqual(parser.parse(text, customers: []).amount, 50_000, text)
+        }
+        XCTAssertTrue(VietnameseMoneyParser().spans(in: "nợ 50.000").isEmpty, "OCR must keep its explicit-unit rule")
+    }
+    func testFormattedPurchaseTotalAndPaidIgnoreItemQuantity() {
+        let draft = VietnameseVoiceParser().parse("Xe An nợ tiền hàng gồm 2 thùng sữa tổng 50.000 đã trả 20.000 còn nợ 30.000", customers: [])
+        XCTAssertEqual(draft.intent, .purchase); XCTAssertEqual(draft.amount, 50_000)
+        XCTAssertEqual(draft.paidNow, 20_000); XCTAssertEqual(draft.newCustomerName, "Xe An")
+    }
+    func testBareAmountsDoNotTurnQuantitiesDatesOrPhonesIntoMoney() {
+        for text in ["Nợ 5 bao gạo", "Xe An mua 2 thùng sữa", "Nợ ngày 05/11/2026", "Xe An số điện thoại 0901234567", "Nợ -50000", "Nợ 50.000 và 20.000", "Nợ 50.000, nợ 20.000"] {
+            XCTAssertNil(VietnameseVoiceParser().parse(text, customers: []).amount, text)
+        }
+    }
+    func testSupplierNamesAreCapturedWithoutExplicitAddCommand() {
+        for name in ["xe Hùng", "nhà xe Mỹ Thạnh", "nhà cung cấp An Phát", "công ty ABC Việt Nam"] {
+            let draft = VietnameseVoiceParser().parse("Nợ \(name) 50.000", customers: [])
+            XCTAssertEqual(draft.intent, .purchase); XCTAssertEqual(draft.amount, 50_000)
+            XCTAssertEqual(draft.newCustomerName, name)
+        }
+    }
+    func testSupplierPrefixMatchesExistingWholeNameAndNeverLastWordAlone() {
+        let supplier = Customer(name: "An Phát", book: .goods)
+        let other = Customer(name: "Bình Phát", book: .goods)
+        let draft = VietnameseVoiceParser().parse("Nhà cung cấp An Phát nợ 50.000", customers: [supplier, other])
+        XCTAssertEqual(draft.candidateIDs, [supplier.id]); XCTAssertNil(draft.newCustomerName)
+        let unknown = VietnameseVoiceParser().parse("Xe Tân Phát nợ 50.000", customers: [supplier, other])
+        XCTAssertTrue(unknown.candidateIDs.isEmpty); XCTAssertEqual(unknown.newCustomerName, "Xe Tân Phát")
+        let query = VietnameseVoiceParser().parse("Tra cứu nợ công ty An Phát", customers: [supplier])
+        XCTAssertEqual(query.candidateIDs, [supplier.id]); XCTAssertNil(query.newCustomerName)
+    }
+    func testExactSupplierPrefixWinsAndDuplicateNamesRemainAmbiguous() {
+        let truck = Customer(name: "Xe An", book: .goods), company = Customer(name: "Công ty An", book: .goods)
+        XCTAssertEqual(VietnameseVoiceParser().parse("Xe An nợ 50.000", customers: [truck, company]).candidateIDs, [truck.id])
+        let a = Customer(name: "An Phát", book: .goods), b = Customer(name: "An Phát", book: .goods)
+        let draft = VietnameseVoiceParser().parse("Nhà cung cấp An Phát nợ 50.000", customers: [a, b])
+        XCTAssertEqual(Set(draft.candidateIDs), Set([a.id, b.id])); XCTAssertNil(draft.newCustomerName)
+    }
     func testDebtWithoutSpokenDongAndAtStartOfSentence() {
         for text in ["Nợ 20 nghìn", "Nợ hai mươi nghìn", "Ghi nợ 20 ngàn", "Chị Mai nợ 20 nghìn."] {
             let draft = VietnameseVoiceParser().parse(text, customers: [Customer(name: "Chị Mai")])

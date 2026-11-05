@@ -167,22 +167,22 @@ final class SoNoUITests: XCTestCase {
     func testVoiceSupplierWithoutDongAndSeparateCustomerBook() {
         app.buttons["voice.open"].tap()
         let transcript = app.textViews["voice.transcript"]
-        XCTAssertTrue(transcript.waitForExistence(timeout: 10)); transcript.tap(); transcript.typeText("Thêm xe An nợ 20 nghìn")
+        XCTAssertTrue(transcript.waitForExistence(timeout: 10)); transcript.tap(); transcript.typeText("Xe An nợ 50.000")
         app.buttons["voice.done"].tap(); app.buttons["voice.analyze"].tap()
         XCTAssertTrue(app.textFields["voice.newName"].waitForExistence(timeout: 10))
         let amount = app.textFields["voice.amount"]
         for _ in 0..<5 where !amount.exists { app.swipeUp() }
         XCTAssertTrue(amount.waitForExistence(timeout: 5), app.debugDescription)
-        XCTAssertEqual(amount.value as? String, "20000")
+        XCTAssertEqual(amount.value as? String, "50000")
         XCTAssertFalse(app.staticTexts["Nợ khách cũ"].exists)
         let confirm = app.buttons["voice.confirm"]
         for _ in 0..<4 where !confirm.isHittable { app.swipeUp() }
         XCTAssertTrue(confirm.isEnabled); confirm.tap()
         XCTAssertTrue(app.staticTexts["Đã xác nhận và lưu"].waitForExistence(timeout: 10))
         app.buttons["Đóng"].tap(); app.tabBars.buttons["Khách hàng"].tap()
-        XCTAssertFalse(app.staticTexts["xe An"].exists)
+        XCTAssertFalse(app.staticTexts["Xe An"].exists)
         app.buttons["Xe hàng"].tap()
-        let supplier = app.staticTexts["xe An"].firstMatch
+        let supplier = app.staticTexts["Xe An"].firstMatch
         XCTAssertTrue(supplier.waitForExistence(timeout: 10)); supplier.tap()
         XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "customer.receivable").firstMatch.exists)
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "customer.goodsPayable").firstMatch.exists)
@@ -193,7 +193,7 @@ final class SoNoUITests: XCTestCase {
         app.buttons["voice.done"].tap(); app.buttons["voice.analyze"].tap()
         let result = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Nợ tiền hàng:" )).firstMatch
         for _ in 0..<5 where !result.exists { app.swipeUp() }
-        XCTAssertTrue(result.waitForExistence(timeout: 10)); XCTAssertTrue(result.label.contains("20.000"))
+        XCTAssertTrue(result.waitForExistence(timeout: 10)); XCTAssertTrue(result.label.contains("50.000"))
         XCTAssertFalse(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Nợ khách:" )).firstMatch.exists)
         screenshot("18-supplier-lookup")
     }
