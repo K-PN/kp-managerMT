@@ -16,6 +16,11 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(draft.paidNow, 20_000); XCTAssertEqual(draft.newCustomerName, "Xe An")
         let short = VietnameseVoiceParser().parse("Xe An nợ 50.000 đã trả 20.000", customers: [])
         XCTAssertEqual(short.intent, .purchase); XCTAssertEqual(short.amount, 50_000); XCTAssertEqual(short.paidNow, 20_000)
+        XCTAssertEqual(VietnameseVoiceParser().parse("Xe An nợ tiền hàng 50.000", customers: []).amount, 50_000)
+        for text in ["Trả tiền hàng xe An 50.000", "Trả nợ tiền hàng xe An 50.000"] {
+            let payment = VietnameseVoiceParser().parse(text, customers: [])
+            XCTAssertEqual(payment.intent, .supplierPayment, text); XCTAssertEqual(payment.amount, 50_000, text)
+        }
     }
     func testBareAmountsDoNotTurnQuantitiesDatesOrPhonesIntoMoney() {
         for text in ["Nợ 5 bao gạo", "Xe An mua 2 thùng sữa", "Nợ ngày 05/11/2026", "Xe An số điện thoại 0901234567", "Nợ -50000", "Nợ 50.000 và 20.000", "Nợ 50.000, nợ 20.000"] {

@@ -98,7 +98,7 @@ public struct VietnameseMoneyParser: Sendable {
                       let range = Range(match.range, in: normalized) else { continue }
                 let before = String(normalized[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
                 let after = String(normalized[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
-                let labelled = before.range(of: #"\b(?:no|tra|thu|tong|tong tien|tong tien hang|thanh tien|thanh toan|so tien|gia)(?:\s+(?:la|them))?\s*[:=]?\s*$"#, options: .regularExpression) != nil
+                let labelled = before.range(of: #"\b(?:no|no tien hang|tra|tra tien hang|tra no tien hang|thu|tong|tong tien|tong tien hang|thanh tien|thanh toan|thanh toan tien hang|thanh toan no tien hang|so tien|gia)(?:\s+(?:la|them))?\s*[:=]?\s*$"#, options: .regularExpression) != nil
                 let endsAmount = after.isEmpty || after.range(of: #"^[,.;!?]|^(?:da tra|con no|hom nay|hom qua|cho|cua)\b"#, options: .regularExpression) != nil
                 guard (labelled || before.isEmpty), endsAmount else { continue }
                 found.append((match.range, String(normalized[range]) + " dong"))

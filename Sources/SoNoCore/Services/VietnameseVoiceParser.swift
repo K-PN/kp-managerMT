@@ -6,11 +6,13 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
         let key = TextKey.normalize(text)
         let supplier = AccountBook.hasSupplierCue(text)
         let supplierName = supplierName(in: text)
+        let mainAction = key.components(separatedBy: "da tra")[0]
         var intent: VoiceIntent = .unknown
         if key.contains("qua han") { intent = .overdue }
         else if key.contains("hom nay") && (key.contains("ai tra") || key.contains("thu duoc")) { intent = .todayCollections }
         else if key.contains("bao nhieu") || key.contains("tra cuu") || key.contains("xem no") { intent = supplier ? .supplierBalance : .balance }
         else if ["nhap hang", "lay hang tu", "lay hang cua", "tien nhap hang"].contains(where: key.contains) { intent = .purchase }
+        else if mainAction.range(of: #"\b(?:tra|thanh toan)\s+(?:no\s+)?tien hang\b"#, options: .regularExpression) != nil { intent = .supplierPayment }
         else if key.contains("no tien hang") || supplier && key.contains("da tra") && key.components(separatedBy: "da tra")[0].range(of: #"\bno\b"#, options: .regularExpression) != nil { intent = .purchase }
         else if key.contains("tra tien hang") || key.contains("thanh toan tien hang") { intent = .supplierPayment }
         else if key.contains("thu no") { intent = .collection }
