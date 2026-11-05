@@ -2,6 +2,22 @@ import XCTest
 @testable import SoNoCore
 
 final class TradingTests: XCTestCase {
+    func testCustomerGoodsPersistReopenAndPartialCollectionKeepsDescription() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent("goods-debt.sqlite")
+        let service = try LedgerService(databaseURL: url), customer = Customer(name: "Khánh", book: .debt)
+        try await service.saveCustomer(customer)
+        let preview = try TransactionProposal(snapshot: await service.snapshot(), customerID: customer.id, kind: .debt, amount: 20_000, goods: "1 lon bò húc", source: .voice)
+        XCTAssertEqual(preview.entries.first?.goodsDescription, "1 lon bò húc")
+        try await service.confirm(preview, confirmed: true)
+        try await service.post([DebtTransaction(customerID: customer.id, amount: 5_000, kind: .collection)], confirmed: true)
+        let reopened = try LedgerService(databaseURL: url)
+        let state = try await reopened.snapshot(), balance = try await reopened.balance(customerID: customer.id)
+        XCTAssertEqual(state.transactions.first(where: { $0.kind == .debt })?.goodsDescription, "1 lon bò húc")
+        XCTAssertEqual(balance.receivable, 15_000); XCTAssertEqual(balance.outstanding.first?.amount, 15_000)
+        XCTAssertTrue(try ReportService.csv(snapshot: state).contains("1 lon bò húc"))
+    }
     func testSameNameAcrossBooksPersistsSeparatelyAndStillBlocksSameBookDuplicate() async throws {
         let service = try ledger()
         let customer = Customer(name: "An", book: .debt), supplier = Customer(name: "An", book: .goods)

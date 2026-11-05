@@ -61,6 +61,7 @@ public actor LedgerService: CustomerRepository, DebtRepository, TransactionRepos
             guard Set(allAttachments.map(\.id)).count == allAttachments.count else { throw LedgerError.invalid("UUID ảnh bị trùng.") }
             let ids = Set(allAttachments.map(\.id))
             for entry in entries {
+                guard (entry.goodsDescription?.count ?? 0) <= 10_000 else { throw LedgerError.invalid("Tên hàng quá dài.") }
                 guard state.customers.contains(where: { $0.id == entry.customerID && $0.mergedInto == nil }) else { throw LedgerError.notFound }
                 guard entry.amount > 0, entry.note.count <= 10_000, entry.effectiveDate <= Date().addingTimeInterval(60),
                       entry.attachmentIDs.allSatisfy(ids.contains) else { throw LedgerError.invalid("Số tiền, ảnh hoặc ngày giao dịch không hợp lệ. Ngày đến hạn có thể ở tương lai.") }

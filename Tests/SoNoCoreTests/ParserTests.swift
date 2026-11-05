@@ -2,6 +2,49 @@ import XCTest
 @testable import SoNoCore
 
 final class ParserTests: XCTestCase {
+    func testDozensAndMillionMoneyVariants() {
+        let cases: [(String, Int64)] = [("chục triệu", 10_000_000), ("một chục triệu", 10_000_000), ("hai chục triệu", 20_000_000), ("2 chục triệu", 20_000_000), ("mười lăm triệu", 15_000_000), ("một triệu hai trăm", 1_200_000), ("1,5 triệu", 1_500_000), ("1.5 triệu", 1_500_000), ("hai triệu rưỡi", 2_500_000)]
+        for (text, expected) in cases {
+            XCTAssertEqual(VietnameseMoneyParser().parse(text).amount, expected, text)
+            XCTAssertEqual(VietnameseVoiceParser().parse("Khánh nợ tiền \(text)", customers: []).amount, expected, text)
+        }
+    }
+    func testDebtGoodsAndMoneyInSpeechFormats() {
+        let customer = Customer(name: "Khánh", book: .debt)
+        let cases: [(String, Int64)] = [("20 nghìn", 20_000), ("hai mươi nghìn", 20_000), ("hai chục nghìn", 20_000), ("20.000", 20_000), ("20000", 20_000), ("2 triệu", 2_000_000), ("2.000.000", 2_000_000), ("hai chục triệu", 20_000_000)]
+        for (money, expected) in cases {
+            let text = "Khánh nợ 1 lon bò húc \(money)"
+            let draft = VietnameseVoiceParser().parse(text, customers: [customer])
+            XCTAssertEqual(draft.intent, .debt, text); XCTAssertEqual(draft.candidateIDs, [customer.id], text)
+            XCTAssertEqual(draft.amount, expected, text); XCTAssertEqual(draft.goodsDescription, "1 lon bò húc", text)
+        }
+    }
+    func testFormattedPriceAfterGoodsNeedsNoImmediateMoneyLabel() {
+        for (text, expected) in [("Khánh nợ 1 bao gạo 1.200.000", Int64(1_200_000)), ("Xe An nợ tiền hàng gồm 2 thùng sữa 500.000", Int64(500_000))] {
+            let draft = VietnameseVoiceParser().parse(text, customers: [])
+            XCTAssertEqual(draft.amount, expected, text)
+            XCTAssertFalse(draft.goodsDescription?.contains(".000") ?? true, text)
+        }
+    }
+    func testGoodsKeepAccentsAndMentionRangesUseOriginalUnicode() {
+        let text = "Khánh nợ  1 lon bò húc 20.000".decomposedStringWithCanonicalMapping
+        let mention = VietnameseMoneyParser().mentions(in: text, allowBareVND: true).first!
+        XCTAssertEqual(String(text[Range(mention.range, in: text)!]), "20.000")
+        XCTAssertEqual(VietnameseVoiceParser().parse(text, customers: []).goodsDescription, "1 lon bò húc")
+        let customer = Customer(name: "Khánh")
+        let reversed = VietnameseVoiceParser().parse("Nợ Khánh 1 lon bò húc giá 20 nghìn", customers: [customer])
+        XCTAssertEqual(reversed.goodsDescription, "1 lon bò húc"); XCTAssertEqual(reversed.amount, 20_000)
+    }
+    func testGoodsQuantitiesDatesPhonesAndAmbiguousPricesAreNotMoney() {
+        for text in ["Khánh nợ 5 lon bò húc", "Khánh nợ 1.000 lon bò húc", "Khánh nợ ngày 05/11/2026", "Khánh nợ 1 lon bò húc số điện thoại 0901234567", "Khánh nợ 1 lon -20 nghìn", "Khánh nợ 1 lon hai triệu ba", "Khánh nợ 1 lon 20.000 và 2 chai 30.000"] {
+            XCTAssertNil(VietnameseVoiceParser().parse(text, customers: []).amount, text)
+        }
+    }
+    func testUnitPriceIsNotPartOfStoredGoodsAndPlainDebtHasNoGoods() {
+        let draft = VietnameseVoiceParser().parse("Khánh mua 5 bao xi măng mỗi bao 90 nghìn", customers: [])
+        XCTAssertEqual(draft.amount, 450_000); XCTAssertEqual(draft.goodsDescription, "5 bao xi măng")
+        XCTAssertNil(VietnameseVoiceParser().parse("Khánh nợ 50.000", customers: []).goodsDescription)
+    }
     func testAppleSpeechFormattedVNDNeedsNoCurrencySuffix() {
         let parser = VietnameseVoiceParser()
         for text in ["nợ 50.000", "Nợ 50000", "Ghi nợ 50.000.", "Chị Mai nợ 50.000", "Thu nợ 50.000", "Trả xe An 50.000"] {

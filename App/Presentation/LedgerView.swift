@@ -106,10 +106,10 @@ struct TransactionEditorView: View {
                     ForEach(model.customers(in: book)) { Text($0.name).tag(Optional($0.id)) }
                     if let original, !model.customers.contains(where: { $0.id == original.customerID }) { Text(model.customerName(original.customerID)).tag(Optional(original.customerID)) }
                 }.disabled(original != nil).accessibilityIdentifier("transaction.customer")
-                if kind == .purchase {
-                    TextField("Mặt hàng / số lượng", text: $goods, axis: .vertical).accessibilityIdentifier("transaction.goods")
+                if kind == .purchase || kind == .debt {
+                    TextField(kind == .debt ? "Hàng khách nợ / số lượng" : "Mặt hàng / số lượng", text: $goods, axis: .vertical).accessibilityIdentifier("transaction.goods")
                 }
-                TextField(kind == .purchase ? "Tổng tiền hàng (đồng)" : "Số tiền (đồng)", text: $amount).keyboardType(.numberPad).focused($moneyFocus, equals: .amount).accessibilityIdentifier("transaction.amount")
+                TextField(kind == .purchase ? "Tổng tiền hàng (đồng)" : kind == .debt ? "Số tiền nợ (đồng)" : "Số tiền (đồng)", text: $amount).keyboardType(.numberPad).focused($moneyFocus, equals: .amount).accessibilityIdentifier("transaction.amount")
                 if let parsedAmount { Text(VND.string(parsedAmount)).font(.title2.bold()).foregroundStyle(.teal) }
                 if kind == .purchase && original == nil {
                     TextField("Đã trả (đồng)", text: $paid).keyboardType(.numberPad).focused($moneyFocus, equals: .paid).accessibilityIdentifier("transaction.paid")

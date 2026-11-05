@@ -81,6 +81,11 @@ struct CustomerDetailView: View {
         value.book = model.book(for: value); return value
     }
     private var entries: [DebtTransaction] { model.entries(for: customerID).filter { book.contains($0, in: model.state.transactions) } }
+    private var openGoods: [OpenDebt] {
+        model.balance(for: customerID).outstanding.filter { debt in
+            debt.amount > 0 && !(entries.first(where: { $0.id == debt.id })?.goodsDescription ?? "").isEmpty
+        }
+    }
     var body: some View {
         List {
             if let customer {
@@ -95,6 +100,13 @@ struct CustomerDetailView: View {
                         DisclosureGroup("Số dư từ bản cũ") {
                             LabeledContent("Khoản phải trả khác", value: VND.string(model.balance(for: customerID).payable - model.balance(for: customerID).goodsPayable))
                             LabeledContent("Khách trả trước", value: VND.string(model.balance(for: customerID).prepaid))
+                        }
+                    }
+                }
+                if book == .debt && !openGoods.isEmpty {
+                    Section("Hàng khách còn nợ") {
+                        ForEach(openGoods) { debt in
+                            LabeledContent(entries.first(where: { $0.id == debt.id })?.goodsDescription ?? "", value: VND.string(debt.amount))
                         }
                     }
                 }

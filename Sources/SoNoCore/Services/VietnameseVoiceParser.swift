@@ -80,7 +80,11 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
         if intent == .unknown { warnings.append("Chưa rõ yêu cầu. Hãy chọn loại giao dịch thủ công.") }
         var result = VoiceDraft(transcript: text, intent: intent, candidateIDs: candidates.map(\.id), amount: amount, effectiveDate: date, warnings: warnings)
         result.paidNow = paidNow
-        if intent == .purchase { result.goodsDescription = goods(in: text) ?? "Tiền hàng" }
+        if intent == .debt || intent == .purchase {
+            let names = candidates.count == 1 ? [candidates[0].name, candidates[0].nickname] : []
+            result.goodsDescription = goods(in: text, customerNames: names, debt: intent == .debt)
+            if intent == .purchase && result.goodsDescription == nil { result.goodsDescription = "Tiền hàng" }
+        }
         if key.contains("them khach") || key.contains("tao khach") || key.contains("them xe") || key.contains("them nha cung cap") { result.newCustomerName = newName(in: text) }
         if let supplierName, candidates.isEmpty, intent == .purchase {
             result.newCustomerName = supplierName
@@ -97,8 +101,25 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
         return capture(text, pattern: #"(?:thêm|them|tạo|tao)\s+khách(?:\s+mới)?\s+(.+?)(?=\s+(?:ghi\s+nợ|nợ|nhập\s+hàng|trả|mua)|[,.;]|$)"#)
         ?? capture(text, pattern: #"(?:them|tao)\s+khach(?:\s+moi)?\s+(.+?)(?=\s+(?:ghi\s+no|no|nhap\s+hang|tra|mua)|[,.;]|$)"#)
     }
-    private func goods(in text: String) -> String? {
-        capture(text, pattern: #"(?:mặt\s+hàng|hàng\s+gồm|gồm|mat\s+hang|hang\s+gom|gom)\s+(.+?)(?=\s+(?:tổng|thành\s+tiền|giá|tong|thanh\s+tien|gia)|[,.;]|$)"#)
+    private func goods(in input: String, customerNames: [String], debt: Bool) -> String? {
+        let text = input.precomposedStringWithCanonicalMapping
+        let explicit = capture(text, pattern: #"(?:mặt\s+hàng|hàng\s+gồm|gồm|mat\s+hang|hang\s+gom|gom)\s+(.+)$"#)
+        let debtClause = debt ? capture(text, pattern: #"(?:ghi\s+nợ|ghi\s+no|nợ|no|mua|lấy\s+thêm|lay\s+them)\s+(.+)$"#) : nil
+        guard var clause = explicit ?? debtClause else { return nil }
+        for name in customerNames.filter({ !$0.isEmpty }).sorted(by: { $0.count > $1.count }) {
+            if let range = clause.range(of: name, options: [.anchored, .caseInsensitive, .diacriticInsensitive]),
+               range.upperBound == clause.endIndex || clause[range.upperBound].isWhitespace {
+                clause = String(clause[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                break
+            }
+        }
+        if let money = VietnameseMoneyParser().mentions(in: clause, allowBareVND: true).first,
+           let range = Range(money.range, in: clause) { clause = String(clause[..<range.lowerBound]) }
+        clause = clause.replacingOccurrences(of: #"\s+(?:mỗi|moi)\b.*$"#, with: "", options: [.regularExpression, .caseInsensitive])
+        clause = clause.replacingOccurrences(of: #"\b(?:tổng(?:\s+tiền(?:\s+hàng)?)?|tong(?:\s+tien(?:\s+hang)?)?|thành\s+tiền|thanh\s+tien|số\s+tiền|so\s+tien|giá|gia|hết|het)\s*[:=]?\s*$"#, with: "", options: [.regularExpression, .caseInsensitive])
+        clause = clause.trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: ",.;:=-")))
+        if ["tien hang", "hang", "tien", "tien no"].contains(TextKey.normalize(clause)) { return nil }
+        return clause.isEmpty ? nil : clause
     }
     private func capture(_ text: String, pattern: String) -> String? {
         guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),

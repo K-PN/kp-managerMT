@@ -72,7 +72,7 @@ struct TransactionRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(model.customerName(entry.customerID)).font(.headline)
                 Text(entry.kind.title).font(.caption).foregroundStyle(.secondary)
-                if let goods = entry.goodsDescription, !goods.isEmpty { Text(goods).font(.caption).lineLimit(2).foregroundStyle(.secondary) }
+                if let goods = entry.goodsDescription, !goods.isEmpty { Text("Hàng: \(goods)").font(.caption).lineLimit(2).foregroundStyle(.secondary) }
                 Text(VietnameseDate.display(entry.effectiveDate)).font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()

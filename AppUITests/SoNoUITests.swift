@@ -197,4 +197,33 @@ final class SoNoUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Nợ khách:" )).firstMatch.exists)
         screenshot("18-supplier-lookup")
     }
+    func testCustomerGoodsBeforeFormattedPricePersistAndAppearInLookup() {
+        addCustomer("Khánh")
+        app.buttons["voice.open"].tap()
+        let transcript = app.textViews["voice.transcript"]
+        XCTAssertTrue(transcript.waitForExistence(timeout: 10)); transcript.tap(); transcript.typeText("Khánh nợ 1 lon bò húc 20.000")
+        app.buttons["voice.done"].tap(); app.buttons["voice.analyze"].tap()
+        let goods = app.descendants(matching: .any).matching(identifier: "voice.goods").firstMatch
+        for _ in 0..<5 where !goods.exists { app.swipeUp() }
+        XCTAssertTrue(goods.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertEqual(goods.value as? String, "1 lon bò húc")
+        let amount = app.textFields["voice.amount"]
+        for _ in 0..<5 where !amount.exists { app.swipeUp() }
+        XCTAssertTrue(amount.waitForExistence(timeout: 5)); XCTAssertEqual(amount.value as? String, "20000")
+        screenshot("19-customer-goods-preview")
+        let confirm = app.buttons["voice.confirm"]
+        for _ in 0..<5 where !confirm.isHittable { app.swipeUp() }
+        XCTAssertTrue(confirm.isEnabled); confirm.tap()
+        XCTAssertTrue(app.staticTexts["Đã xác nhận và lưu"].waitForExistence(timeout: 10)); app.buttons["Đóng"].tap()
+        assertReceivable(contains: "20.000")
+        screenshot("20-customer-goods-saved")
+        app.buttons["voice.open"].tap()
+        let query = app.textViews["voice.transcript"]
+        XCTAssertTrue(query.waitForExistence(timeout: 10)); query.tap(); query.typeText("Khánh còn nợ bao nhiêu")
+        app.buttons["voice.done"].tap(); app.buttons["voice.analyze"].tap()
+        let result = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "1 lon bò húc")).firstMatch
+        for _ in 0..<5 where !result.exists { app.swipeUp() }
+        XCTAssertTrue(result.waitForExistence(timeout: 10)); XCTAssertTrue(result.label.contains("20.000"))
+        screenshot("21-customer-goods-lookup")
+    }
 }

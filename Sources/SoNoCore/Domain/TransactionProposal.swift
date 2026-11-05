@@ -19,7 +19,7 @@ public struct TransactionProposal: Sendable {
         guard kind != .purchase || !description.isEmpty else { throw LedgerError.invalid("Hãy nhập mặt hàng đã lấy.") }
         let entry = DebtTransaction(customerID: customerID, amount: amount, kind: kind, effectiveDate: date,
                                     note: note, source: source, attachmentIDs: attachments,
-                                    goodsDescription: kind == .purchase ? description : nil)
+                                    goodsDescription: [.debt, .purchase].contains(kind) && !description.isEmpty ? description : nil)
         var pending = [entry]
         if kind == .purchase && paidNow > 0 {
             pending.append(DebtTransaction(customerID: customerID, amount: paidNow, kind: .supplierPayment,

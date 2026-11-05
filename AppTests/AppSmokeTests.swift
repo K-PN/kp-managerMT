@@ -4,6 +4,14 @@ import SoNoCore
 import PDFKit
 
 final class AppSmokeTests: XCTestCase {
+    func testCustomerStatementIncludesGoodsAndDebtAmount() throws {
+        let customer = Customer(name: "Khánh", book: .debt)
+        let entry = DebtTransaction(customerID: customer.id, amount: 20_000, kind: .debt, goodsDescription: "1 lon bò húc")
+        let url = try PDFReports.statement(customer: customer, entries: [entry], balance: LedgerCalculator.balance([entry]), book: .debt)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let text = try XCTUnwrap(PDFDocument(url: url)?.string)
+        XCTAssertTrue(text.contains("1 lon bò húc")); XCTAssertTrue(text.contains("20.000"))
+    }
     func testAccountStatementsOnlyIncludeRelevantTotals() throws {
         let customer = Customer(name: "An")
         let entries = [DebtTransaction(customerID: customer.id, amount: 20_000, kind: .debt)]

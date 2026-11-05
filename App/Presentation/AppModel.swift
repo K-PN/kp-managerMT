@@ -78,7 +78,14 @@ final class AppModel: ObservableObject {
         case .balance, .supplierBalance:
             guard let id = selectedCustomerID else { throw LedgerError.invalid("Hãy chọn một khách hàng để tra cứu.") }
             let goods = draft.intent == .supplierBalance
-            return "\(customerName(id))\n\(goods ? "Nợ tiền hàng" : "Nợ khách"): \(VND.string(goods ? balance(for: id).goodsPayable : balance(for: id).receivable))"
+            let heading = "\(customerName(id))\n\(goods ? "Nợ tiền hàng" : "Nợ khách"): \(VND.string(goods ? balance(for: id).goodsPayable : balance(for: id).receivable))"
+            guard !goods else { return heading }
+            let history = entries(for: id)
+            let items = balance(for: id).outstanding.filter { $0.amount > 0 }.compactMap { debt -> String? in
+                guard let name = history.first(where: { $0.id == debt.id })?.goodsDescription, !name.isEmpty else { return nil }
+                return "Hàng: \(name) — còn nợ \(VND.string(debt.amount))"
+            }
+            return ([heading] + items).joined(separator: "\n")
         case .todayCollections:
             let entries = try LedgerCalculator.active(state.transactions).filter { $0.kind == .collection && VietnameseDate.calendar.isDateInToday($0.effectiveDate) }
             return "Đã thu hôm nay: \(VND.string(summary?.collectedToday ?? 0)). " + entries.map { "\(customerName($0.customerID)): \(VND.string($0.amount))" }.joined(separator: "; ")

@@ -149,8 +149,8 @@ struct VoiceInputView: View {
     }
     private var transactionFields: some View {
         Section("Giao dịch đề xuất") {
-            if intent == .purchase { TextField("Mặt hàng / số lượng", text: $goods, axis: .vertical).accessibilityIdentifier("voice.goods") }
-            TextField(intent == .purchase ? "Tổng tiền hàng (đồng)" : "Số tiền (đồng)", text: $amount).keyboardType(.numberPad).focused($editingMoney, equals: .amount).accessibilityIdentifier("voice.amount")
+            if intent == .purchase || intent == .debt { TextField(intent == .debt ? "Hàng khách nợ / số lượng" : "Mặt hàng / số lượng", text: $goods, axis: .vertical).accessibilityIdentifier("voice.goods") }
+            TextField(intent == .purchase ? "Tổng tiền hàng (đồng)" : intent == .debt ? "Số tiền nợ (đồng)" : "Số tiền (đồng)", text: $amount).keyboardType(.numberPad).focused($editingMoney, equals: .amount).accessibilityIdentifier("voice.amount")
             if let value = VietnameseMoneyParser().parse(amount).amount { Text(VND.string(value)).font(.title2.bold()).foregroundStyle(.teal).accessibilityIdentifier("voice.amountVND") }
             if intent == .purchase { TextField("Đã trả (đồng)", text: $paid).keyboardType(.numberPad).focused($editingMoney, equals: .paid).accessibilityIdentifier("voice.paid") }
             DatePicker("Ngày giao dịch", selection: $date, in: ...Date(), displayedComponents: [.date, .hourAndMinute])
@@ -161,6 +161,7 @@ struct VoiceInputView: View {
             if creatingNew { LabeledContent("Khách mới", value: newName) }
             else if let id = selectedCustomerID { LabeledContent("Đúng người giao dịch", value: model.customerName(id)) }
             if let proposal {
+                if !goods.isEmpty { LabeledContent("Hàng", value: goods) }
                 if book == .debt {
                     LabeledContent("Nợ khách cũ", value: VND.string(proposal.before.receivable)).accessibilityIdentifier("voice.oldDebt")
                 } else { LabeledContent("Nợ tiền hàng cũ", value: VND.string(proposal.before.goodsPayable)) }
