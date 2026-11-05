@@ -1,14 +1,20 @@
 # Kết quả kiểm tra và việc còn cần chạy
 
-## Ghi sổ gọn và chữ lớn 1.4.0 — chờ build iOS
+## Ghi sổ gọn và chữ lớn 1.4.0 — đã kiểm chứng iOS, chưa phát hành
+
+Ngày 05/11/2026, [Verify iOS #9](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec87efab17f8deb7530ee9), source `073e797`, **hoàn tất thành công**: 64 core + 6 app + 7 UI = **77/77 XCTest đạt**, đóng gói app Simulator và ảnh XCTest thành công. Theo yêu cầu người dùng, chỉ chạy `ios-verify` với `CODE_SIGNING_ALLOWED=NO`; **chưa ký IPA hoặc upload 1.4.0 lên TestFlight**.
+
+Đã sửa ba nguyên nhân: `ba1a2c9` tách đúng tên trong câu “Khánh còn nợ bao nhiêu”, thêm regression có/không dấu và cuộn tới ô tên mới khi bật chữ lớn; `948e84e` tránh xuất attachments hai lần gây `manifest.json: file already exists`; `073e797` chờ trạng thái công tắc xác nhận, chỉ thử lại tối đa một lần nếu vẫn tắt và vẫn kiểm tra trạng thái cuối, nút Ghi sổ, số dư. Các luồng này đều đạt trong lượt #9.
+
+Lịch sử: build ký #20 (`82c1b3e`) dừng ở hai UI tests; Verify #7 đạt 77 tests nhưng lỗi xuất trùng manifest; Verify #8 được dừng sau lỗi chạm công tắc trước đóng gói. Ba kiểm tra riêng bằng Bash/mocks cho script đóng gói đã đạt: dùng export có sẵn, xuất khi thiếu manifest và từ chối manifest hỏng.
 
 Đã rút gọn màn hình giọng nói: đề xuất tên mới từ câu tên–nợ/trả, vẫn đổi được sang khách có sẵn; bỏ khối “Giao dịch đề xuất”, giữ hàng và tiền trong bản nháp. Phần đối chiếu hiển thị mặt hàng–số tiền, nợ cũ và nợ sau. “Sửa chi tiết” thu gọn, tự mở khi thiếu tiền hoặc cần sửa ngày. Không tạo hồ sơ/giao dịch trước Xác nhận. ID khách tạm giữ ổn định khi tính preview và xác nhận.
 
 Parser tập trung tên người trước nợ/trả; tách tên nhà xe/nhà cung cấp/công ty trước cả số tiền viết bằng chữ. Đối chiếu tên riêng riêng với mặt hàng, không chọn nhầm người trùng tên hàng hoặc trùng từ cuối của một tên đầy đủ khác. Từ “xe” trong “bánh xe đạp” không tự biến khách thành nhà cung cấp. Hàng hóa ở câu thu nợ cũng được giữ trong giao dịch.
 
-Cỡ chữ SwiftUI giới hạn tối đa xLarge; hàng–tiền tự chuyển dọc nếu thiếu chiều ngang, số tiền trong lịch sử co vừa dòng. Thêm ba core tests theo các mẫu nói và một UI test ở cỡ chữ accessibility lớn nhất, đổi khách mới sang khách có sẵn rồi xác nhận đúng số tiền; cập nhật các UI tests cũ để kiểm tra bản đối chiếu thu gọn thay vì ô tiền đang ẩn. Dự kiến 63 core + 6 app + 7 UI = 76 XCTest, **chưa chạy trên macOS/iOS nên chưa coi là đạt**.
+Cỡ chữ SwiftUI giới hạn tối đa xLarge; hàng–tiền tự chuyển dọc nếu thiếu chiều ngang, số tiền trong lịch sử co vừa dòng. UI test ở cỡ chữ accessibility lớn nhất đã đổi khách mới sang khách có sẵn, kiểm tra hàng–tiền nằm trong chiều ngang màn hình, xác nhận và kiểm tra số dư. Luồng tra cứu sau ghi nợ và đóng bản tạm không lưu cũng đã đạt. Các tests nhập văn bản thay cho thu âm thật.
 
-Windows: 7/7 kiểm tra workspace/SQLite/syntax và 18/18 pipeline tests đạt. Công cụ trình duyệt mới trả `The browser access host is unavailable` tại bước `cua.listBrowsers()`; chưa khởi chạy Codemagic hoặc phát hành TestFlight 1.4.0. Bản đã xác minh trước đó vẫn là 1.3.0 (25).
+Windows: 7/7 kiểm tra workspace/SQLite/syntax và 18/18 pipeline tests đạt; Bash syntax và ba tình huống đóng gói đạt. Kết nối Chrome đã khôi phục. Tải artifact qua Chrome bị `storage.googleapis.com` / `ERR_BLOCKED_BY_CLIENT`, nên chưa xem trực tiếp ảnh iPhone xuất từ lượt này. Log XCTest và trạng thái workflow đã được đọc qua DOM. Bản TestFlight đã phát hành trước đó là 1.3.0 (25).
 
 ## Hàng khách nợ và tiền sau tên hàng 1.3.0
 

@@ -1,6 +1,8 @@
 # Kiểm thử Tạp Hóa Mỹ Thạnh
 
-## Bản 1.4.0 — chờ kiểm thử iOS và TestFlight
+## Bản 1.4.0 — đã kiểm chứng iOS, chưa lên TestFlight
+
+[Verify iOS #9](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec87efab17f8deb7530ee9), source `073e797`: **77/77 XCTest đạt** (64 core + 6 app + 7 UI), đóng gói Simulator/ảnh thành công ngày 05/11/2026. Chỉ chạy workflow kiểm chứng, chưa ký IPA hoặc upload Apple theo yêu cầu người dùng.
 
 1. Nói “Khánh nợ một thùng bia hai trăm nghìn” khi chưa có Khánh: tự chọn **Khánh · mới**, đối chiếu **một thùng bia | 200.000đ**. Đóng chưa tạo hồ sơ; Xác nhận mới lưu. Vẫn chọn được một khách có sẵn thay cho tên mới.
 2. Có Khánh: nói “Khánh nợ 20.000” tự chọn hồ sơ cũ; có nhiều hồ sơ cùng tên thì yêu cầu chọn. Thử câu “Khánh trả một thùng bia 200.000” với số nợ đủ để thu.
@@ -8,7 +10,7 @@
 4. Không còn khối “Giao dịch đề xuất”. Các ô tiền, hàng, đã trả và ngày nằm trong **Sửa chi tiết**, mặc định thu gọn khi đủ dữ liệu; thiếu tiền hoặc ngày chưa rõ thì mở để sửa. Thay văn bản phải phân tích lại trước xác nhận.
 5. Bật cỡ chữ iPhone lớn nhất, kiểm tra Tổng quan, lịch sử và màn hình ghi sổ: chữ trong app tối đa xLarge, mặt hàng dài chuyển dòng, tiền và nút Xác nhận vẫn đọc/bấm được. Thử tên hàng dài ở iPhone màn hình nhỏ.
 
-Mã đã có trên GitHub; 76 XCTest cần chạy trên Codemagic trước khi ký/upload. Chưa có bản TestFlight 1.4.0 để cài.
+Mã đã có trên GitHub và đã kiểm chứng trên Simulator. Chưa có bản TestFlight 1.4.0 để cài; chưa thử thu âm thật trên iPhone thay người dùng.
 
 ## Bản 1.3.0 (25) — sẵn sàng trên TestFlight
 

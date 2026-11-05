@@ -1,5 +1,7 @@
 # Tạp Hóa Mỹ Thạnh
 
+**1.4.0 đã kiểm chứng iOS, chưa phát hành:** [Verify iOS #9](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec87efab17f8deb7530ee9), source `073e797`, **77/77 XCTest đạt** và đóng gói Simulator/ảnh thành công. Đã sửa tra cứu tên khách, bước kiểm thử xác nhận và xuất trùng manifest. Workflow `ios-verify` không ký/upload TestFlight. Xem [báo cáo kiểm chứng](docs/VERIFICATION.md).
+
 Ứng dụng iPhone cá nhân bằng **Swift + SwiftUI**, iOS 17 trở lên. Sổ khách hàng, giao dịch, ảnh và nhật ký nằm trong SQLite trên iPhone. Không có tài khoản ứng dụng, quảng cáo, Firebase hay Supabase. Tiền dùng `Int64` nguyên đồng; lịch và hiển thị dùng `Asia/Ho_Chi_Minh`.
 
 **Bản mới nhất 1.3.0 (25) đang Testing trên TestFlight:** thêm hàng hóa riêng cho nợ khách; “Khánh nợ 1 lon bò húc 20 nghìn” hoặc văn bản “Khánh nợ 1 lon bò húc 20.000” tự điền hàng **1 lon bò húc**, nợ **20.000đ**. Tách tiền sau tên hàng, hỗ trợ nghìn/triệu/chục triệu và số VNĐ có dấu chấm, không cần hậu tố “đồng”. Chi tiết/tra cứu/CSV/PDF giữ mặt hàng; chỉ Xác nhận mới lưu. [Build #19](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec2fec004ce28f20ee0fc1), source `91efe9f`, **72/72 XCTest đạt** (60 core + 6 app + 6 UI), ký/upload Apple thành công và gán nhóm **SoNo AI Internal**. Mở TestFlight → **Tạp Hóa Mỹ Thạnh → Update**, giữ ứng dụng để giữ dữ liệu. Chưa kiểm chứng thu âm trên iPhone thay người dùng. Xem [kịch bản thử](docs/QUICK_TEST.md).
