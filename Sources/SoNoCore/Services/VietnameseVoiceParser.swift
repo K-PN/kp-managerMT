@@ -113,7 +113,7 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
     }
     private func personName(in input: String) -> String? {
         let text = input.precomposedStringWithCanonicalMapping
-        guard let name = capture(text, pattern: #"^(.+?)\s+(?:vừa\s+|vua\s+)?(?:ghi\s+nợ|ghi\s+no|nợ|no|trả|tra|thanh\s+toán|thanh\s+toan)\b"#),
+        guard let name = capture(text, pattern: #"^(.+?)\s+(?:vừa\s+|vua\s+|còn\s+|con\s+)?(?:ghi\s+nợ|ghi\s+no|nợ|no|trả|tra|thanh\s+toán|thanh\s+toan)\b"#),
               name.count <= 100, name.split(separator: " ").count <= 8,
               name.rangeOfCharacter(from: .decimalDigits) == nil,
               !AccountBook.hasSupplierCue(name),

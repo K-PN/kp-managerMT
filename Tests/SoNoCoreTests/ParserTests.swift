@@ -2,6 +2,15 @@ import XCTest
 @testable import SoNoCore
 
 final class ParserTests: XCTestCase {
+    func testCustomerLookupDoesNotIncludeConInPersonName() {
+        let customer = Customer(name: "Khánh", book: .debt)
+        for text in ["Khánh còn nợ bao nhiêu", "Khánh nợ bao nhiêu", "Khanh con no bao nhieu", "Tra cứu nợ Khánh"] {
+            let draft = VietnameseVoiceParser().parse(text, customers: [customer])
+            XCTAssertEqual(draft.intent, .balance, text)
+            XCTAssertEqual(draft.candidateIDs, [customer.id], text)
+            XCTAssertNil(draft.newCustomerName, text)
+        }
+    }
     func testFocusedCustomerPatternsAutomaticallyProposeNewNames() {
         let parser = VietnameseVoiceParser()
         for (text, kind, goods, amount) in [

@@ -210,7 +210,9 @@ final class SoNoUITests: XCTestCase {
         XCTAssertTrue(transcript.waitForExistence(timeout: 10)); transcript.tap()
         transcript.typeText("Thanh nợ một thùng bia hai trăm nghìn")
         app.buttons["voice.done"].tap(); app.buttons["voice.analyze"].tap()
-        XCTAssertTrue(app.textFields["voice.newName"].waitForExistence(timeout: 10))
+        let newName = app.textFields["voice.newName"]
+        for _ in 0..<5 where !newName.exists { app.swipeUp() }
+        XCTAssertTrue(newName.waitForExistence(timeout: 10), app.debugDescription)
         XCTAssertEqual(app.textFields["voice.newName"].value as? String, "Thanh")
         app.buttons["voice.customer"].tap(); app.buttons["Mai"].tap()
         XCTAssertFalse(app.textFields["voice.newName"].exists)
