@@ -90,11 +90,12 @@ final class SoNoUITests: XCTestCase {
     private func assertReceivable(contains amount: String) {
         let balance = app.descendants(matching: .any).matching(identifier: "customer.receivable").firstMatch
         XCTAssertTrue(balance.waitForExistence(timeout: 10))
-        let predicate = NSPredicate { _, _ in
-            (balance.label + " " + (balance.value as? String ?? "")).contains(amount)
-        }
-        expectation(for: predicate, evaluatedWith: nil)
-        waitForExpectations(timeout: 10)
+        // Evaluate both attributes in one accessibility snapshot. Separate
+        // remote reads can exhaust the wait while the Simulator is busy.
+        let predicate = NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", amount, amount)
+        let result = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: balance)], timeout: 30)
+        if result != .completed { screenshot("unexpected-customer-balance") }
+        XCTAssertEqual(result, .completed, "Expected balance \(amount). \(balance.debugDescription)")
     }
     private func addCustomer(_ value: String, supplier: Bool = false) {
         app.tabBars.buttons["Khách hàng"].tap()
