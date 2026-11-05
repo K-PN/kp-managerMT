@@ -170,7 +170,10 @@ final class SoNoUITests: XCTestCase {
         XCTAssertTrue(transcript.waitForExistence(timeout: 10)); transcript.tap(); transcript.typeText("Thêm xe An nợ 20 nghìn")
         app.buttons["voice.done"].tap(); app.buttons["voice.analyze"].tap()
         XCTAssertTrue(app.textFields["voice.newName"].waitForExistence(timeout: 10))
-        XCTAssertEqual(app.textFields["voice.amount"].value as? String, "20000")
+        let amount = app.textFields["voice.amount"]
+        for _ in 0..<5 where !amount.exists { app.swipeUp() }
+        XCTAssertTrue(amount.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertEqual(amount.value as? String, "20000")
         XCTAssertFalse(app.staticTexts["Nợ khách cũ"].exists)
         let confirm = app.buttons["voice.confirm"]
         for _ in 0..<4 where !confirm.isHittable { app.swipeUp() }
@@ -189,6 +192,7 @@ final class SoNoUITests: XCTestCase {
         XCTAssertTrue(query.waitForExistence(timeout: 10)); query.tap(); query.typeText("Tra cứu nợ xe An")
         app.buttons["voice.done"].tap(); app.buttons["voice.analyze"].tap()
         let result = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Nợ tiền hàng:" )).firstMatch
+        for _ in 0..<5 where !result.exists { app.swipeUp() }
         XCTAssertTrue(result.waitForExistence(timeout: 10)); XCTAssertTrue(result.label.contains("20.000"))
         XCTAssertFalse(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Nợ khách:" )).firstMatch.exists)
         screenshot("18-supplier-lookup")
