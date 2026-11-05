@@ -1,5 +1,23 @@
 # Kết quả kiểm tra và việc còn cần chạy
 
+## Tách sổ khách / xe hàng 1.2.0
+
+Ngày 05/11/2026, source `8b0fa3d`: bỏ khối icon/khẩu hiệu trên Tổng quan; phân cấp hai thẻ tổng nợ lớn và hai thẻ tiền hàng nhỏ. Sổ giao dịch bỏ nhóm Tất cả, chỉ có Nợ khách/Tiền hàng với danh sách người và loại giao dịch riêng. Hồ sơ có nhóm tùy chọn, JSON cũ thiếu trường vẫn đọc được; dữ liệu cũ suy ra nhóm theo tên/lịch sử. Trường hợp có lịch sử cả hai nhóm vẫn truy cập được ở mỗi sổ, không xóa dữ liệu. Chi tiết, preview, tra cứu và phiếu PDF chỉ hiện các số dư thuộc nhóm đang xem.
+
+Parser nhận câu bắt đầu bằng “Nợ”, không cần nói “đồng” sau “nghìn/ngàn”; từ xe/nhà cung cấp/công ty định tuyến nợ, trả và tra cứu tiền hàng. Sáu thao tác chính trong menu giọng nói; thêm xe mới qua lời nói vẫn chờ xác nhận. Cùng tên ở hai nhóm được tạo riêng; trùng trong cùng nhóm vẫn bị chặn.
+
+Windows đạt 7/7 kiểm tra workspace, 18/18 kiểm thử pipeline; `git diff --check` sạch. Bộ XCTest gồm 47 core + 5 app smoke + 5 UI; không xác minh micro thật bằng kiểm thử văn bản hoặc Simulator.
+
+Build #10 dừng ở compiler core: hàm `newName(in:)` cần `return` tường minh sau khi thêm nhánh nhận tên xe. Đã sửa ở `ab45eca` và khởi chạy [build #11](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec1444004ce28f20ee0901). Chưa ký/upload 1.2.0 ở lượt #10.
+
+Build #11: 47/47 core, 5/5 app smoke và 4/5 UI đạt. PDF theo từng nhóm không hiện số dư không liên quan; các luồng công nợ, nhập hàng, dashboard/bộ lọc/báo cáo và tạo khách bằng giọng nói đạt. UI test mới dừng vì `voice.amount` chưa có trong cây accessibility khi còn ở ngoài vùng hiển thị của Form. Commit `f4bcc5f` cho cuộn tối đa 5 lần để tìm ô số tiền/kết quả tra cứu rồi vẫn kiểm tra đầy đủ 20.000đ, lưu và phân nhóm.
+
+[Build #12](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec163a004ce28f20ee096e), `f4bcc5f`: **57/57 XCTest đạt** (47 core + 5 app smoke + 5 UI). Test mới nhận “Thêm xe An nợ 20 nghìn” thành 20.000đ, xác nhận lưu, xe không có trong danh sách khách nợ, chi tiết xe chỉ hiện nợ tiền hàng; tra cứu “Tra cứu nợ xe An” trả đúng 20.000đ và không có dòng nợ khách. Archive/export và kiểm tra metadata đạt.
+
+Build #12 thành công sau 8m36s; IPA **1.2.0 (18)** 1,26 MB, dSYM 2,28 MB, artifact log/xcresult 94,46 MB. Apple trả **UPLOAD SUCCEEDED with no errors**, delivery UUID `7c9dcd17-5054-4837-8d7c-fd10ded20049`.
+
+**Đã xác minh TestFlight 1.2.0 (18) ngày 05/11/2026:** Apple processing hoàn tất, khai báo mã hóa hệ điều hành đã lưu; gán bản 18 vào nhóm **SoNo AI Internal** hiện có. Trang Builds xác nhận **1 Tester ∙ 3 Builds**, bản **1.2.0 (18)** đang **Testing**. Tester hiện đã cài 1.1.0 (15), có thể cập nhật. Ảnh bằng chứng `build/evidence/my-thanh-testflight-18-testing.png` lưu cục bộ (ignored). Chưa cài bản mới hoặc thử âm thanh micro trên thiết bị thay người dùng.
+
 ## Cập nhật Tạp Hóa Mỹ Thạnh 1.1.0
 
 Ngày 04/11/2026, source `3955153`: đã triển khai tên mới, quản lý nhập hàng/đã trả/nợ nhà cung cấp, bốn thẻ tổng quan, Apple Speech tự mở với kết quả tạm và xác nhận, thêm khách bằng giọng nói, bộ lọc ngày và tổng CSV/PDF. Người dùng đã xác nhận tiền hàng tháng/tuần là tổng hàng nhập gồm đã trả và còn nợ.

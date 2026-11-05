@@ -1,5 +1,17 @@
 # Kiểm thử Tạp Hóa Mỹ Thạnh
 
+## Bản cập nhật 1.2.0 (18) — sẵn sàng trên TestFlight
+
+Source `f4bcc5f`, [build #12](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec163a004ce28f20ee096e): **57/57 XCTest đạt** (47 core + 5 app smoke + 5 UI), ký IPA và upload Apple thành công sau 8m36s. Apple processing và khai báo mã hóa hoàn tất; bản **1.2.0 (18)** đang **Testing** trong nhóm **SoNo AI Internal** ngày 05/11/2026. Trên iPhone, mở **TestFlight → Tạp Hóa Mỹ Thạnh → Update**, kiểm tra đúng **1.2.0 (18)**; giữ app hiện tại để giữ dữ liệu. Chưa kiểm chứng nhận dạng âm thanh trên iPhone thay người dùng.
+
+1. Tổng quan: bỏ khối icon/khẩu hiệu; hai tổng nợ lớn đồng cấp ở trên, tiền hàng tuần/tháng nhỏ ở dưới.
+2. Khách hàng: chuyển giữa **Khách nợ** và **Xe hàng**. Khi tạo/sửa hồ sơ, chọn đúng nhóm. Khách và xe cùng tên được giữ riêng; hồ sơ cũ tự phân loại theo tên/lịch sử, không xóa giao dịch cũ.
+3. Sổ giao dịch: chuyển **Nợ khách / Tiền hàng**; danh sách người và loại giao dịch phải chỉ thuộc sổ đang chọn. Kiểm tra lọc ngày ở từng sổ.
+4. Nói “Nợ 20 nghìn” hoặc “Chị Mai nợ hai mươi nghìn”: số tiền phải hiện **20.000đ**, thao tác Ghi nợ. Chọn đúng người trước khi xác nhận.
+5. Nói “Xe An nợ 20 nghìn”, “Nhà cung cấp An nợ 20 nghìn”, “Công ty An nợ 20 nghìn”: nhận **Nợ tiền hàng**. “Trả xe An 10 nghìn” nhận **Trả tiền hàng**. “Tra cứu nợ xe An” chỉ hiện nợ tiền hàng; tra cứu khách chỉ hiện nợ khách.
+6. Thao tác giao dịch/tra cứu có sáu lựa chọn: Ghi nợ, Thu nợ, Nợ tiền hàng, Trả tiền hàng, Tra cứu khách nợ, Tra cứu nợ xe. Thử “Thêm xe An nợ 20 nghìn”; đóng preview phải chưa lưu, chỉ Xác nhận mới tạo hồ sơ/giao dịch.
+7. Chi tiết và phiếu PDF của khách không hiện nợ tiền hàng; của xe không hiện phải thu khách. Thử dữ liệu cũ và số dư sau đóng/mở app.
+
 ## Bản cập nhật 1.1.0 (15) — sẵn sàng trên TestFlight
 
 [Build #9](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aebd854004ce28f20edfb86), commit `3f100ac`, thành công sau 9m50s: **48/48 XCTest đạt** (40 core + 4 app smoke + 4 UI), đã ký IPA **1.1.0 (15)** và Apple xác nhận upload thành công. Lỗi khởi động XCTest Runner của build #8 không lặp lại. Ngày 05/11/2026, Apple processing và khai báo mã hóa hoàn tất; nhóm **SoNo AI Internal** hiển thị bản **1.1.0 (15)** đang **Testing**, cùng tester hiện có. Kết quả 36 XCTest và các ảnh bên dưới thuộc bản 1.0.0.
