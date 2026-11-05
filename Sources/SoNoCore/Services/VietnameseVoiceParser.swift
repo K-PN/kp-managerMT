@@ -4,8 +4,8 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
     public init() {}
     public func parse(_ text: String, customers: [Customer], now: Date = Date()) -> VoiceDraft {
         let key = TextKey.normalize(text)
-        let supplier = AccountBook.hasSupplierCue(text)
         let supplierName = supplierName(in: text)
+        let supplier = supplierName != nil || key.contains("no tien hang")
         let mainAction = key.components(separatedBy: "da tra")[0]
         var intent: VoiceIntent = .unknown
         if key.contains("qua han") { intent = .overdue }
@@ -100,6 +100,10 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
     }
     private func supplierName(in text: String) -> String? {
         guard let captured = capture(text, pattern: #"\b((?:nhà\s+xe|nha\s+xe|nhà\s+cung\s+cấp|nha\s+cung\s+cap|công\s+ty|cong\s+ty|xe)\s+[^\d\s,.;:!?][^,.;:!?]*?)(?=\s+(?:ghi\s+nợ|ghi\s+no|còn\s+nợ|con\s+no|nợ|no|trả|tra|đã\s+trả|da\s+tra|thanh\s+toán|thanh\s+toan|nhập\s+hàng|nhap\s+hang|mua|lấy|lay|gồm|gom|hàng\s+gồm|hang\s+gom|tổng|tong|thành\s+tiền|thanh\s+tien|số\s+điện\s+thoại|so\s+dien\s+thoai|hôm|hom|\d+(?:[.,]\d+)*)\b|[,.;:!?]|$)"#) else { return nil }
+        guard let position = text.range(of: captured, options: .caseInsensitive) else { return nil }
+        let prefix = TextKey.normalize(String(text[..<position.lowerBound])).trimmingCharacters(in: CharacterSet(charactersIn: ",.;:!? "))
+        // Business cues belong to the contact clause, not to goods such as “bánh xe đạp”.
+        guard prefix.isEmpty || prefix.range(of: #"^(?:ghi no|no|tra|thu|thanh toan|tra no tien hang|tra tien hang|nhap hang|lay hang|tien nhap hang|tra cuu no|tra cuu|xem no|them|tao)(?: tu| cua| cho)?$"#, options: .regularExpression) != nil else { return nil }
         if let mention = VietnameseMoneyParser().mentions(in: captured, allowBareVND: true).first,
            let range = Range(mention.range, in: captured) {
             let name = captured[..<range.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)

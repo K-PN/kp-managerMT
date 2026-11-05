@@ -1,5 +1,15 @@
 # Kết quả kiểm tra và việc còn cần chạy
 
+## Ghi sổ gọn và chữ lớn 1.4.0 — chờ build iOS
+
+Đã rút gọn màn hình giọng nói: đề xuất tên mới từ câu tên–nợ/trả, vẫn đổi được sang khách có sẵn; bỏ khối “Giao dịch đề xuất”, giữ hàng và tiền trong bản nháp. Phần đối chiếu hiển thị mặt hàng–số tiền, nợ cũ và nợ sau. “Sửa chi tiết” thu gọn, tự mở khi thiếu tiền hoặc cần sửa ngày. Không tạo hồ sơ/giao dịch trước Xác nhận. ID khách tạm giữ ổn định khi tính preview và xác nhận.
+
+Parser tập trung tên người trước nợ/trả; tách tên nhà xe/nhà cung cấp/công ty trước cả số tiền viết bằng chữ. Đối chiếu tên riêng riêng với mặt hàng, không chọn nhầm người trùng tên hàng hoặc trùng từ cuối của một tên đầy đủ khác. Từ “xe” trong “bánh xe đạp” không tự biến khách thành nhà cung cấp. Hàng hóa ở câu thu nợ cũng được giữ trong giao dịch.
+
+Cỡ chữ SwiftUI giới hạn tối đa xLarge; hàng–tiền tự chuyển dọc nếu thiếu chiều ngang, số tiền trong lịch sử co vừa dòng. Thêm ba core tests theo các mẫu nói và một UI test ở cỡ chữ accessibility lớn nhất, đổi khách mới sang khách có sẵn rồi xác nhận đúng số tiền; cập nhật các UI tests cũ để kiểm tra bản đối chiếu thu gọn thay vì ô tiền đang ẩn. Dự kiến 63 core + 6 app + 7 UI = 76 XCTest, **chưa chạy trên macOS/iOS nên chưa coi là đạt**.
+
+Windows: 7/7 kiểm tra workspace/SQLite/syntax và 18/18 pipeline tests đạt. Công cụ trình duyệt mới trả `The browser access host is unavailable` tại bước `cua.listBrowsers()`; chưa khởi chạy Codemagic hoặc phát hành TestFlight 1.4.0. Bản đã xác minh trước đó vẫn là 1.3.0 (25).
+
 ## Hàng khách nợ và tiền sau tên hàng 1.3.0
 
 Source `91efe9f`, ngày 05/11/2026. Ô tiền phân tích văn bản từ `bestTranscription.formattedString`; bản trước yêu cầu số không đơn vị đứng sát nhãn nợ/tổng nên bỏ sót giá sau mặt hàng. Mở rộng nhận giá nhóm hàng nghìn hoặc số nguyên lớn ở cuối cụm trong lệnh tài chính, vẫn loại số lượng hàng/ngày/điện thoại và giữ nhiều giá thành mơ hồ. Thêm “chục” trong số tiếng Việt, dấu chấm thập phân có đơn vị, và vị trí span trong văn bản gốc để tách đúng mặt hàng, giữ dấu tiếng Việt/Unicode.

@@ -1,5 +1,15 @@
 # Kiểm thử Tạp Hóa Mỹ Thạnh
 
+## Bản 1.4.0 — chờ kiểm thử iOS và TestFlight
+
+1. Nói “Khánh nợ một thùng bia hai trăm nghìn” khi chưa có Khánh: tự chọn **Khánh · mới**, đối chiếu **một thùng bia | 200.000đ**. Đóng chưa tạo hồ sơ; Xác nhận mới lưu. Vẫn chọn được một khách có sẵn thay cho tên mới.
+2. Có Khánh: nói “Khánh nợ 20.000” tự chọn hồ sơ cũ; có nhiều hồ sơ cùng tên thì yêu cầu chọn. Thử câu “Khánh trả một thùng bia 200.000” với số nợ đủ để thu.
+3. Nói “Nợ nhà cung cấp An Phát hai chục triệu”, “Trả xe An năm trăm nghìn”: đối chiếu đúng tên, thao tác và tiền. Nhà cung cấp chưa có nợ thì không cho trả vượt số dư.
+4. Không còn khối “Giao dịch đề xuất”. Các ô tiền, hàng, đã trả và ngày nằm trong **Sửa chi tiết**, mặc định thu gọn khi đủ dữ liệu; thiếu tiền hoặc ngày chưa rõ thì mở để sửa. Thay văn bản phải phân tích lại trước xác nhận.
+5. Bật cỡ chữ iPhone lớn nhất, kiểm tra Tổng quan, lịch sử và màn hình ghi sổ: chữ trong app tối đa xLarge, mặt hàng dài chuyển dòng, tiền và nút Xác nhận vẫn đọc/bấm được. Thử tên hàng dài ở iPhone màn hình nhỏ.
+
+Mã đã có trên GitHub; 76 XCTest cần chạy trên Codemagic trước khi ký/upload. Chưa có bản TestFlight 1.4.0 để cài.
+
 ## Bản 1.3.0 (25) — sẵn sàng trên TestFlight
 
 Source `91efe9f`: bộ tách tiền dùng văn bản Apple Speech, hỗ trợ giá đứng sau tên hàng và “chục triệu”; mặt hàng được lưu riêng cho nợ khách, hiện trong chi tiết, tra cứu, CSV/PDF. **72/72 XCTest đạt** (60 core + 6 app + 6 UI); [build #19](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec2fec004ce28f20ee0fc1) ký/upload thành công. Apple processing và khai báo mã hóa hoàn tất, đã gán **SoNo AI Internal**; bản **1.3.0 (25)** đang **Testing** ngày 05/11/2026. Mở **TestFlight → Tạp Hóa Mỹ Thạnh → Update**; giữ app hiện tại để giữ dữ liệu. UI đã kiểm chứng bằng văn bản, chưa thu âm trên iPhone thay người dùng.
