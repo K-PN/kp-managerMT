@@ -12,6 +12,7 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
         else if key.contains("bao nhieu") || key.contains("tra cuu") || key.contains("xem no") { intent = supplier ? .supplierBalance : .balance }
         else if ["nhap hang", "lay hang tu", "lay hang cua", "tien nhap hang"].contains(where: key.contains) { intent = .purchase }
         else if key.contains("tra tien hang") || key.contains("thanh toan tien hang") { intent = .supplierPayment }
+        else if key.contains("thu no") { intent = .collection }
         else if key.range(of: #"\btra\b|\bthanh toan\b"#, options: .regularExpression) != nil { intent = supplier ? .supplierPayment : .collection }
         else if key.range(of: #"\b(?:ghi no|lay them|mua|no)\b"#, options: .regularExpression) != nil { intent = supplier || key.contains("no tien hang") ? .purchase : .debt }
         else if key.contains("them khach") || key.contains("tao khach") || key.contains("them xe") || key.contains("them nha cung cap") { intent = .createCustomer }

@@ -8,6 +8,7 @@ final class ParserTests: XCTestCase {
             XCTAssertEqual(parser.parse(text, customers: []).amount, 50_000, text)
         }
         XCTAssertTrue(VietnameseMoneyParser().spans(in: "nợ 50.000").isEmpty, "OCR must keep its explicit-unit rule")
+        XCTAssertEqual(parser.parse("Thu nợ 50.000", customers: []).intent, .collection)
     }
     func testFormattedPurchaseTotalAndPaidIgnoreItemQuantity() {
         let draft = VietnameseVoiceParser().parse("Xe An nợ tiền hàng gồm 2 thùng sữa tổng 50.000 đã trả 20.000 còn nợ 30.000", customers: [])
