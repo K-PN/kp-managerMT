@@ -1,5 +1,23 @@
 # Kết quả kiểm tra và việc còn cần chạy
 
+## Sửa văn bản Apple Speech và tên nhà cung cấp 1.2.1
+
+Source `5feedbe`, ngày 05/11/2026. Người dùng báo Apple Speech trả “nợ 50.000” khi nói “nợ 50 nghìn”; parser cũ chỉ lấy span có đơn vị nên bỏ sót. Thêm nhận số VNĐ không có hậu tố trong ngữ cảnh nợ/trả/tổng/thành tiền, không đổi quy tắc span OCR. Phần tổng và đã trả hỗ trợ cùng kiểu số; loại số lượng hàng, ngày, số âm và số điện thoại không nằm trong ngữ cảnh tiền. Lệnh “Thu nợ” ưu tiên collection trước từ “nợ”.
+
+Tách tên sau xe/nhà xe/nhà cung cấp/công ty, dừng trước thao tác/số tiền/mặt hàng. Đối chiếu tên đầy đủ/biệt danh, ưu tiên khớp cả tiền tố, không chọn theo từ cuối. Chưa có hồ sơ thì điền tên mới vào bản nháp nợ tiền hàng; tra cứu không tạo hồ sơ. Xác nhận vẫn là bước duy nhất ghi dữ liệu.
+
+Windows đạt 7/7 kiểm tra workspace và 18/18 pipeline tests; đã bổ sung sáu core regression tests và đổi UI test sang chính văn bản “Xe An nợ 50.000”, không có “Thêm” hoặc “đồng”. Dự kiến 53 core + 5 app + 5 UI tests; chưa coi là đạt khi chưa có kết quả cloud.
+
+[Build #14](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec1e28004ce28f20ee0b48) ghi kết quả dưới đây. Lượt #13 được hủy lúc chuẩn bị để dùng commit mới nhất, chưa ký/upload.
+
+Build #14 biên dịch core thành công, 49/53 tests đạt; bốn assertion cùng thuộc câu có tổng nợ và “đã trả”: parser ưu tiên nhầm supplierPayment. Đã ưu tiên câu ghi nợ tiền hàng kèm đã trả, vẫn phân biệt rõ “Trả nợ tiền hàng”, và giữ “đã trả 0” hợp lệ. Commit `5feedbe` gồm các regression assertions này. Lượt #15 hủy trước native build để dùng bản sửa số tiền đã trả bằng 0.
+
+[Build #16](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec1f30004ce28f20ee0b83), source `5feedbe`: **63/63 XCTest đạt** (53 core + 5 app + 5 UI). UI test nhập chính văn bản “Xe An nợ 50.000”, không có “đồng” hoặc “Thêm”: ô số tiền tự có 50000, tự đề xuất tên mới, xác nhận lưu vào Xe hàng, tra cứu lại đúng 50.000đ và không có dòng nợ khách. Chưa thử thu âm trên iPhone thay người dùng.
+
+Build #16 thành công sau 9m01s; đã ký/xuất IPA **1.2.1 (22)** 1,27 MB, kiểm tra metadata/provisioning/signature resources đạt. Apple trả **UPLOAD SUCCEEDED with no errors**, delivery UUID `8acdfdff-fa67-4b2f-bd63-3f0efddeaeff`.
+
+**Đã xác minh TestFlight 1.2.1 (22) ngày 05/11/2026:** Apple processing và khai báo mã hóa hệ điều hành hoàn tất; đã gán vào **SoNo AI Internal**. Trang nhóm xác nhận **1 Tester ∙ 4 Builds**, bản **1.2.1 (22)** đang **Testing**. Tester hiện đã cài 1.2.0 (18), có thể cập nhật. Ảnh bằng chứng `build/evidence/my-thanh-testflight-22-testing.png` lưu cục bộ (ignored).
+
 ## Tách sổ khách / xe hàng 1.2.0
 
 Ngày 05/11/2026, source `8b0fa3d`: bỏ khối icon/khẩu hiệu trên Tổng quan; phân cấp hai thẻ tổng nợ lớn và hai thẻ tiền hàng nhỏ. Sổ giao dịch bỏ nhóm Tất cả, chỉ có Nợ khách/Tiền hàng với danh sách người và loại giao dịch riêng. Hồ sơ có nhóm tùy chọn, JSON cũ thiếu trường vẫn đọc được; dữ liệu cũ suy ra nhóm theo tên/lịch sử. Trường hợp có lịch sử cả hai nhóm vẫn truy cập được ở mỗi sổ, không xóa dữ liệu. Chi tiết, preview, tra cứu và phiếu PDF chỉ hiện các số dư thuộc nhóm đang xem.

@@ -1,5 +1,14 @@
 # Kiểm thử Tạp Hóa Mỹ Thạnh
 
+## Bản sửa 1.2.1 (22) — sẵn sàng trên TestFlight
+
+Source `5feedbe`, [build #16](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec1f30004ce28f20ee0b83): sửa dạng văn bản Apple Speech đổi “50 nghìn” thành “50.000”. Không cần thêm “đồng”. Tên đứng sau xe/nhà xe/nhà cung cấp/công ty được đối chiếu với tên đầy đủ hoặc biệt danh của hồ sơ có sẵn; nếu chưa có thì đề xuất tên mới trong giao dịch nợ tiền hàng. Không tự lưu trước Xác nhận. **63/63 XCTest đạt** (53 core + 5 app + 5 UI). Apple processing và khai báo mã hóa đã hoàn tất; bản **1.2.1 (22)** đang **Testing** trong **SoNo AI Internal**. Mở TestFlight → Tạp Hóa Mỹ Thạnh → Update, kiểm tra đúng **1.2.1 (22)**; giữ app để giữ dữ liệu.
+
+1. Nói “nợ 50 nghìn”; nếu văn bản hiện **nợ 50.000**, ô số tiền phải tự có **50000**, hiển thị **50.000đ**. Thử thêm “Ghi nợ 50.000” và “Thu nợ 50.000”.
+2. Nói “Xe An nợ 50.000” hoặc “Nợ nhà cung cấp An Phát 50.000”. Khi chưa có hồ sơ, tên mới phải tự điền, không cần nói “Thêm”. Đóng preview chưa tạo hồ sơ; chỉ Xác nhận mới lưu.
+3. Có hồ sơ “An Phát” trong Xe hàng: nói “Nhà cung cấp An Phát nợ 50.000” phải chọn đúng hồ sơ, không đề xuất tạo trùng. Hai hồ sơ cùng tên phải yêu cầu chọn. Không chọn chỉ vì trùng từ cuối.
+4. Thử “Xe An nợ tiền hàng gồm 2 thùng sữa tổng 50.000 đã trả 20.000 còn nợ 30.000”: tổng 50.000đ, đã trả 20.000đ. Số lượng 2, ngày và số điện thoại không được lấy làm số tiền.
+
 ## Bản cập nhật 1.2.0 (18) — sẵn sàng trên TestFlight
 
 Source `f4bcc5f`, [build #12](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aec163a004ce28f20ee096e): **57/57 XCTest đạt** (47 core + 5 app smoke + 5 UI), ký IPA và upload Apple thành công sau 8m36s. Apple processing và khai báo mã hóa hoàn tất; bản **1.2.0 (18)** đang **Testing** trong nhóm **SoNo AI Internal** ngày 05/11/2026. Trên iPhone, mở **TestFlight → Tạp Hóa Mỹ Thạnh → Update**, kiểm tra đúng **1.2.0 (18)**; giữ app hiện tại để giữ dữ liệu. Chưa kiểm chứng nhận dạng âm thanh trên iPhone thay người dùng.
