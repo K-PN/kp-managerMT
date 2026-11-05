@@ -78,7 +78,7 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
     private func newName(in text: String) -> String? {
         if let name = capture(text, pattern: #"(?:thêm|them|tạo|tao)\s+((?:xe|nhà\s+cung\s+cấp|nha\s+cung\s+cap|công\s+ty|cong\s+ty)\s+.+?)(?=\s+(?:ghi\s+nợ|ghi\s+no|nợ|no|nhập\s+hàng|nhap\s+hang|trả|tra|mua)|[,.;]|$)"#) { return name }
         // Fold only for matching, retaining accents in the captured display name.
-        capture(text, pattern: #"(?:thêm|them|tạo|tao)\s+khách(?:\s+mới)?\s+(.+?)(?=\s+(?:ghi\s+nợ|nợ|nhập\s+hàng|trả|mua)|[,.;]|$)"#)
+        return capture(text, pattern: #"(?:thêm|them|tạo|tao)\s+khách(?:\s+mới)?\s+(.+?)(?=\s+(?:ghi\s+nợ|nợ|nhập\s+hàng|trả|mua)|[,.;]|$)"#)
         ?? capture(text, pattern: #"(?:them|tao)\s+khach(?:\s+moi)?\s+(.+?)(?=\s+(?:ghi\s+no|no|nhap\s+hang|tra|mua)|[,.;]|$)"#)
     }
     private func goods(in text: String) -> String? {
