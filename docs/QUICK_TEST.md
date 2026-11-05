@@ -1,8 +1,8 @@
 # Kiểm thử Tạp Hóa Mỹ Thạnh
 
-## Bản cập nhật 1.1.0 — chờ build iOS
+## Bản cập nhật 1.1.0 (15) — đã upload Apple
 
-Build 1.1.0 đầu tiên đã biên dịch core và đạt 37/38 XCTest; lỗi nhầm “mới” với “mỗi” trong lệnh thêm khách đã được sửa trên branch main, chờ chạy lại. Chưa có IPA/TestFlight 1.1.0; kết quả 36 XCTest và các ảnh bên dưới thuộc bản 1.0.0. Trong Codemagic, dùng **Start new build**, chọn branch **main**, workflow **My Thanh - Signed IPA and TestFlight upload** để lấy commit mới. Pipeline phải đạt core/app/UI tests trước khi ký và upload. Sau upload cần kiểm tra Apple processing, compliance và gán bản mới vào nhóm internal hiện có.
+[Build #9](https://codemagic.io/app/6aea10057cef5b806068b14c/build/6aebd854004ce28f20edfb86), commit `3f100ac`, thành công sau 9m50s: **48/48 XCTest đạt** (40 core + 4 app smoke + 4 UI), đã ký IPA **1.1.0 (15)** và Apple xác nhận upload thành công. Lỗi khởi động XCTest Runner của build #8 không lặp lại. Chưa xác nhận Apple processing/compliance và gán bản mới vào nhóm internal vì phiên App Store Connect chuyển về đăng nhập. Kết quả 36 XCTest và các ảnh bên dưới thuộc bản 1.0.0.
 
 Khi bản 1.1.0 xuất hiện trên TestFlight, chọn **Update**, giữ ứng dụng hiện tại để kiểm tra dữ liệu cũ còn nguyên. Dùng khách và chứng từ thử riêng:
 
