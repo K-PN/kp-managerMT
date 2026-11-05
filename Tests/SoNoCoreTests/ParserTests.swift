@@ -17,6 +17,8 @@ final class ParserTests: XCTestCase {
         let short = VietnameseVoiceParser().parse("Xe An nợ 50.000 đã trả 20.000", customers: [])
         XCTAssertEqual(short.intent, .purchase); XCTAssertEqual(short.amount, 50_000); XCTAssertEqual(short.paidNow, 20_000)
         XCTAssertEqual(VietnameseVoiceParser().parse("Xe An nợ tiền hàng 50.000", customers: []).amount, 50_000)
+        let unpaid = VietnameseVoiceParser().parse("Xe An nợ 50.000 đã trả 0", customers: [])
+        XCTAssertEqual(unpaid.amount, 50_000); XCTAssertEqual(unpaid.paidNow, 0)
         for text in ["Trả tiền hàng xe An 50.000", "Trả nợ tiền hàng xe An 50.000"] {
             let payment = VietnameseVoiceParser().parse(text, customers: [])
             XCTAssertEqual(payment.intent, .supplierPayment, text); XCTAssertEqual(payment.amount, 50_000, text)

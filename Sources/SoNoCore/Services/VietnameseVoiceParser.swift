@@ -66,11 +66,11 @@ public struct VietnameseVoiceParser: VoiceCommandParser {
             if parts.count == 2 {
                 let paymentText = parts[1].components(separatedBy: "con no")[0]
                 let paid = parser.spans(in: paymentText, allowBareVND: true)
-                if paid.count == 1 {
+                if paymentText.trimmingCharacters(in: .whitespacesAndNewlines).range(of: #"^0(?:\s*(?:dong|vnd|d))?[.,]?$"#, options: .regularExpression) != nil { paidNow = 0 }
+                else if paid.count == 1 {
                     paidNow = parser.parse(paid[0]).amount
                     if paidNow == nil { amount = nil; warnings.append("Phần đã trả chưa rõ số tiền.") }
                 }
-                else if paymentText.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("0") { paidNow = 0 }
                 else { amount = nil; warnings.append("Chưa rõ phần đã trả. Hãy nhập lại.") }
             } else if spans.count == 1 { paidNow = 0 }
             else { amount = nil }
