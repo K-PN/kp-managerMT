@@ -61,6 +61,7 @@ public struct VietnameseMoneyParser: Sendable {
     private func number(_ tokens: [String]) -> Decimal? {
         if tokens.count == 1 {
             if let digit = Self.digits[tokens[0]] { return Decimal(digit) }
+            if tokens[0] == "chuc" || tokens[0] == "muoi" { return Decimal(10) }
             let token = tokens[0]
             if token.range(of: #"^\d{1,3}(\.\d{3})+$"#, options: .regularExpression) != nil {
                 return Decimal(string: token.replacingOccurrences(of: ".", with: ""), locale: Locale(identifier: "en_US_POSIX"))
